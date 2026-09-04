@@ -1,14 +1,22 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ConnectPanel } from "../components/ConnectPanel";
 import { FailureNotice } from "../components/FailureNotice";
-import { SessionSummary } from "../components/SessionSummary";
+import { SessionHeader } from "../components/SessionHeader";
+import { Nav } from "../components/Nav";
+import { Loading } from "../components/Notice";
 import { ask } from "../lib/messaging";
+import { useNavigation } from "../store/navigation";
 import type { SessionSnapshot } from "../../lib/messages";
+import Pending from "./Pending";
+import Courses from "./Courses";
+import CourseDetail from "./CourseDetail";
+import Grades from "./Grades";
 
-/** Pantalla de la Fase 0. Tres estados: sin conectar, conectado, o un fallo
- *  que dice qué pasó y qué hacer. */
+/** Armazón de la aplicación: primero la sesión, y solo con sesión válida se
+ *  monta la navegación y la vista actual. */
 export default function Home() {
   const client = useQueryClient();
+  const view = useNavigation((state) => state.view);
 
   const session = useQuery({
     queryKey: ["session"],
@@ -19,59 +27,68 @@ export default function Home() {
     mutationFn: (type: "connect" | "disconnect") => ask({ type }),
     onSuccess: (snapshot: SessionSnapshot) => {
       client.setQueryData(["session"], snapshot);
+      // Los datos de la sesión anterior ya no valen para la nueva.
+      void client.invalidateQueries({ queryKey: ["pending"] });
+      void client.invalidateQueries({ queryKey: ["courses"] });
+      void client.invalidateQueries({ queryKey: ["grades"] });
+      void client.invalidateQueries({ queryKey: ["contents"] });
     },
   });
 
-  const connect = () => act.mutate("connect");
-  const busy = act.isPending || session.isFetching;
-
-  return (
+  const shell = (children: React.ReactNode) => (
     <main className="pantalla">
       <div className="pantalla__centro">
-        <p className="etiqueta" style={{ color: "var(--color-text-subtle)" }}>
-          Tu información académica
-        </p>
-        <h1 className="titulo">IsilHelper</h1>
-
-        {session.isPending && (
-          <p className="estado">
-            <span aria-hidden="true">·</span>
-            <span>Estoy comprobando si ya tienes la cuenta conectada.</span>
-          </p>
-        )}
-
-        {session.isError && (
-          <FailureNotice
-            reason="unexpected"
-            onRetry={() => void session.refetch()}
-            retrying={busy}
-          />
-        )}
-
-        {session.data?.state === "disconnected" && (
-          <ConnectPanel onConnect={connect} connecting={act.isPending} />
-        )}
-
-        {session.data?.state === "connected" && (
-          <SessionSummary
-            fullname={session.data.fullname}
-            courses={session.data.courses}
-            onDisconnect={() => act.mutate("disconnect")}
-          />
-        )}
-
-        {session.data?.state === "failed" && (
-          <FailureNotice
-            reason={session.data.reason}
-            onRetry={connect}
-            retrying={busy}
-          />
-        )}
-
+        {children}
         <footer className="pie">
           <p className="firma-labs">IsilHelper · un proyecto de Suki</p>
         </footer>
       </div>
     </main>
+  );
+
+  if (session.isPending) {
+    return shell(<Loading what="Estoy comprobando si ya tienes la cuenta conectada." />);
+  }
+
+  if (session.isError) {
+    return shell(
+      <FailureNotice
+        reason="unexpected"
+        onRetry={() => void session.refetch()}
+        retrying={session.isFetching}
+      />,
+    );
+  }
+
+  if (session.data.state === "disconnected") {
+    return shell(
+      <ConnectPanel onConnect={() => act.mutate("connect")} connecting={act.isPending} />,
+    );
+  }
+
+  if (session.data.state === "failed") {
+    return shell(
+      <FailureNotice
+        reason={session.data.reason}
+        onRetry={() => act.mutate("connect")}
+        retrying={act.isPending}
+      />,
+    );
+  }
+
+  return shell(
+    <>
+      <SessionHeader
+        fullname={session.data.fullname}
+        onDisconnect={() => act.mutate("disconnect")}
+      />
+      <Nav />
+      {view.name === "pending" && <Pending />}
+      {view.name === "courses" && <Courses />}
+      {view.name === "grades" && <Grades />}
+      {view.name === "course" && (
+        <CourseDetail courseId={view.courseId} courseName={view.courseName} />
+      )}
+    </>,
   );
 }

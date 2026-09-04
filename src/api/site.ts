@@ -1,18 +1,10 @@
-/** Llamadas de la Fase 0: quién soy y qué cursos tengo. */
+/** Quién soy y qué cursos tengo. */
 
 import { callWebService } from "./client";
-import { err, type Result } from "./result";
+import { withToken } from "./call";
+import type { Result } from "./result";
 import type { ApiError } from "./errors";
 import type { Course, SiteInfo } from "./types";
-import { readToken } from "../lib/storage";
-
-async function withToken<T>(
-  call: (token: string) => Promise<Result<T, ApiError>>,
-): Promise<Result<T, ApiError>> {
-  const token = await readToken();
-  if (token === null) return err({ kind: "notoken" });
-  return call(token);
-}
 
 export function getSiteInfo(): Promise<Result<SiteInfo, ApiError>> {
   return withToken((token) =>

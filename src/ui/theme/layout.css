@@ -57,3 +57,150 @@
   color: var(--acento);
   font-variant-numeric: tabular-nums;
 }
+
+/* ---------- Cabecera y navegación ---------- */
+.cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-bottom: var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.nav {
+  display: flex;
+  gap: var(--space-2);
+  margin: var(--space-6) 0 var(--space-8);
+}
+
+/* El activo cambia color de texto Y lleva barra: la barra sola sería color
+   como único portador de información. */
+.nav__item {
+  height: var(--control-alto);
+  padding: 0 var(--space-4);
+  display: inline-flex;
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: var(--text-body-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: background var(--motion-fast) var(--motion-ease),
+              color var(--motion-fast) var(--motion-ease);
+}
+.nav__item:hover { background: var(--color-elevated); color: var(--color-text); }
+.nav__item[aria-current="page"] {
+  color: var(--color-base);
+  background: var(--acento);
+  border-color: var(--acento);
+  font-weight: var(--weight-semibold);
+}
+
+/* ---------- Resumen de urgencias ---------- */
+.resumen { display: flex; flex-wrap: wrap; gap: var(--space-4); margin-bottom: var(--space-8); }
+
+.resumen__dato {
+  border: 1px solid var(--color-border);
+  border-left-width: var(--border-width-zone);
+  padding: var(--space-3) var(--space-4);
+  min-width: 128px;
+}
+.resumen__cifra {
+  font-family: var(--font-mono);
+  font-size: var(--text-h3);
+  line-height: var(--leading-h3);
+  font-variant-numeric: tabular-nums;
+  display: block;
+}
+.resumen__etiqueta {
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--color-text-subtle);
+}
+
+/* ---------- Lista de pendientes ---------- */
+.lista { list-style: none; margin: 0; padding: 0; }
+
+.pendiente {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left-width: var(--border-width-zone);
+}
+.pendiente + .pendiente { margin-top: var(--space-2); }
+
+.pendiente__marca {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-mono-label);
+  white-space: nowrap;
+}
+.pendiente__cuerpo { flex: 1 1 320px; min-width: 0; }
+.pendiente__nombre { color: var(--color-heading); font-weight: var(--weight-medium); }
+.pendiente__curso { color: var(--color-text-muted); font-size: var(--text-body-sm); }
+.pendiente__fecha {
+  font-family: var(--font-mono);
+  font-size: var(--text-body-sm);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* Urgencias. Cada una lleva además etiqueta de texto. */
+.u-overdue { border-left-color: var(--color-error); }
+.u-overdue .pendiente__marca { color: var(--color-error); }
+.u-today { border-left-color: var(--color-warning); }
+.u-today .pendiente__marca { color: var(--color-warning); }
+.u-week { border-left-color: var(--color-info); }
+.u-week .pendiente__marca { color: var(--color-info); }
+.u-later { border-left-color: var(--color-border); }
+.u-later .pendiente__marca { color: var(--color-text-subtle); }
+
+/* ---------- Grilla de cursos ---------- */
+.grilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-4);
+}
+
+.curso {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: background var(--motion-fast) var(--motion-ease);
+}
+.curso:hover { background: var(--color-elevated); }
+.curso__nombre { color: var(--color-heading); font-weight: var(--weight-semibold); }
+
+/* Barra de avance. Nunca sola: siempre lleva el porcentaje en texto. */
+.barra { height: var(--space-2); background: var(--color-border-strong); }
+.barra__relleno { height: 100%; background: var(--acento); }
+
+/* ---------- Secciones del detalle de curso ---------- */
+.seccion + .seccion { margin-top: var(--space-8); }
+.modulo {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.modulo__estado { font-family: var(--font-mono); font-size: var(--text-body-sm); white-space: nowrap; }
+.modulo__nombre { flex: 1 1 auto; min-width: 0; }
+.modulo__meta { color: var(--color-text-subtle); font-size: var(--text-body-sm); white-space: nowrap; }

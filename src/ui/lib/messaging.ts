@@ -1,6 +1,9 @@
-import type { BackgroundRequest, SessionSnapshot } from "../../lib/messages";
+import type { BackgroundRequest, ResponseFor } from "../../lib/messages";
 
-/** Único punto por el que la interfaz habla con el service worker. */
-export function ask(request: BackgroundRequest): Promise<SessionSnapshot> {
-  return chrome.runtime.sendMessage<BackgroundRequest, SessionSnapshot>(request);
+/** Único punto por el que la interfaz habla con el service worker. El tipo de
+ *  la respuesta se deduce del tipo de la petición. */
+export async function ask<R extends BackgroundRequest>(
+  request: R,
+): Promise<ResponseFor<R["type"]>> {
+  return (await chrome.runtime.sendMessage(request)) as ResponseFor<R["type"]>;
 }

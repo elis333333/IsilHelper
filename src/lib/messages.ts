@@ -4,10 +4,7 @@
  *  El token nunca cruza por aquí: la interfaz sabe si hay sesión, no cuál es
  *  el token. */
 
-export type BackgroundRequest =
-  | { type: "session" }
-  | { type: "connect" }
-  | { type: "disconnect" };
+import type { PendingItem } from "../api/pending";
 
 export type CourseSummary = {
   id: number;
@@ -24,12 +21,73 @@ export type FailureReason =
   | "network"
   | "unexpected";
 
+/** Distingue "cargó y está vacío" de "no se pudo cargar". Una lista de
+ *  pendientes vacía a mitad de ciclo casi siempre es lo segundo, y presentarla
+ *  como lo primero es mentirle al estudiante. */
+export type Loaded<T> =
+  | { state: "ok"; value: T }
+  | { state: "failed"; reason: FailureReason };
+
 export type SessionSnapshot =
   | { state: "disconnected" }
-  | {
-      state: "connected";
-      fullname: string;
-      sitename: string;
-      courses: CourseSummary[];
-    }
+  | { state: "connected"; fullname: string; sitename: string; courses: CourseSummary[] }
   | { state: "failed"; reason: FailureReason };
+
+export type ModuleView = {
+  id: number;
+  name: string;
+  kind: string | null;
+  /** `null` si el curso no lleva seguimiento de completado. */
+  completed: boolean | null;
+  url: string | null;
+  fileCount: number;
+};
+
+export type SectionView = {
+  id: number;
+  name: string;
+  modules: ModuleView[];
+};
+
+export type CourseDetail = {
+  courseId: number;
+  courseName: string;
+  sections: SectionView[];
+};
+
+export type CourseGradeRow = {
+  courseId: number;
+  courseName: string;
+  percentage: number | null;
+  source: "total" | "weighted" | "none";
+  graded: number;
+  /** El curso no se pudo leer: se marca en su sitio, no se oculta la tabla. */
+  failed: boolean;
+};
+
+export type GradesReport = {
+  rows: CourseGradeRow[];
+  average: number | null;
+  failedCount: number;
+};
+
+export type BackgroundRequest =
+  | { type: "session" }
+  | { type: "connect" }
+  | { type: "disconnect" }
+  | { type: "pending" }
+  | { type: "courses" }
+  | { type: "contents"; courseId: number; courseName: string }
+  | { type: "grades" };
+
+export type ResponseMap = {
+  session: SessionSnapshot;
+  connect: SessionSnapshot;
+  disconnect: SessionSnapshot;
+  pending: Loaded<PendingItem[]>;
+  courses: Loaded<CourseSummary[]>;
+  contents: Loaded<CourseDetail>;
+  grades: Loaded<GradesReport>;
+};
+
+export type ResponseFor<K extends BackgroundRequest["type"]> = ResponseMap[K];

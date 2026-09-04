@@ -47,3 +47,106 @@ export function isMoodleException(data: unknown): data is MoodleException {
     "errorcode" in data
   );
 }
+
+// --------------------------------------------------------------------------
+// Calendario · core_calendar_get_action_events_by_timesort
+// --------------------------------------------------------------------------
+
+/**
+ * Un evento accionable del calendario.
+ *
+ * Solo `id`, `name` y `timesort` se declaran obligatorios: son los que la
+ * función garantiza y los únicos sobre los que se puede construir sin
+ * comprobar. El resto va opcional **a propósito**, porque no están verificados
+ * contra la cuenta real y suponer su presencia es cómo se rompe la pantalla
+ * entera por un campo que no vino.
+ */
+export type CalendarEvent = {
+  id: number;
+  name: string;
+  /** Marca de tiempo Unix en segundos por la que se ordena. */
+  timesort: number;
+  timestart?: number;
+  url?: string;
+  viewurl?: string;
+  modulename?: string;
+  activityname?: string;
+  /** Moodle lo marca cuando la entrega ya venció. */
+  overdue?: boolean;
+  course?: {
+    id: number;
+    fullname?: string;
+    shortname?: string;
+  };
+  action?: {
+    name?: string;
+    url?: string;
+    itemcount?: number;
+    actionable?: boolean;
+  };
+};
+
+export type ActionEventsResponse = {
+  events: CalendarEvent[];
+  firstid?: number;
+  lastid?: number;
+};
+
+// --------------------------------------------------------------------------
+// Contenidos de curso · core_course_get_contents
+// --------------------------------------------------------------------------
+
+export type ModuleContent = {
+  type?: string;
+  filename?: string;
+  filesize?: number;
+  fileurl?: string;
+  mimetype?: string;
+};
+
+export type CourseModule = {
+  id: number;
+  name: string;
+  modname?: string;
+  url?: string;
+  /** 0 = no completado, 1 = completado. Ausente si el curso no lo usa. */
+  completiondata?: { state?: number };
+  contents?: ModuleContent[];
+};
+
+export type CourseSection = {
+  id: number;
+  name: string;
+  summary?: string;
+  modules?: CourseModule[];
+};
+
+// --------------------------------------------------------------------------
+// Notas · gradereport_user_get_grade_items
+// --------------------------------------------------------------------------
+
+export type GradeItem = {
+  id: number;
+  itemname?: string | null;
+  /** `course` marca el total del curso; el resto son actividades. */
+  itemtype?: string;
+  itemmodule?: string | null;
+  graderaw?: number | null;
+  grademin?: number | null;
+  grademax?: number | null;
+  gradeformatted?: string | null;
+  percentageformatted?: string | null;
+  /** Peso del ítem dentro del curso. Puede no venir. */
+  weightraw?: number | null;
+  feedback?: string | null;
+};
+
+export type UserGrades = {
+  courseid: number;
+  userid: number;
+  gradeitems: GradeItem[];
+};
+
+export type GradeItemsResponse = {
+  usergrades: UserGrades[];
+};

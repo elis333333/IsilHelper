@@ -6,25 +6,34 @@
 
 ---
 
+**Fase 0 — cerrada.** Verificada con sesión real: "Conectado como *X*" con los
+11 cursos y su avance.
+
 ## Fase actual
 
-**Fase 0 — Esqueleto y autenticación.** Código completo. Falta una única
-comprobación, que solo Elis puede hacer: el camino feliz con su sesión real.
+**Fase 1a.** Las cuatro pantallas escritas y verificadas con datos de prueba.
+Falta pasarlas por la cuenta real.
 
 ## Siguiente paso
 
-**Probar el camino feliz.** Todo lo demás está verificado; esto no, porque
-necesita una `MoodleSession` viva y el perfil de pruebas no la tiene.
+**Probar la 1a contra la cuenta real** y contrastar cuatro cosas que no se
+pudieron verificar sin sesión:
 
-1. Entrar en `platform.ecala.net` como siempre.
-2. `chrome://extensions` → modo desarrollador → *Cargar sin empaquetar* →
-   `dist/`. **Ojo: Google Chrome ignora `--load-extension` por política; Brave
-   sí lo permite.**
-3. Pulsar el ícono, luego Conectar. Debe aparecer "Conectado como *X*" con los
-   11 cursos y su avance.
+1. **Qué campos trae de verdad `core_calendar_get_action_events_by_timesort`.**
+   Los tipos declaran obligatorios solo `id`, `name` y `timesort`; el resto es
+   opcional a propósito. Si `course`, `modulename` o `action.url` vienen
+   siempre, se pueden endurecer.
+2. **Si devuelve entregas ya entregadas.** Si aparecen, hay que filtrarlas por
+   `action.actionable` o por el estado de la entrega.
+3. **Si `gradereport_user_get_grade_items` trae el ítem `itemtype: "course"`.**
+   Si viene, el promedio sale del total oficial de Moodle; si no, de la
+   ponderación por `weightraw`. La tabla marca cuál usó con la palabra
+   "calculado".
+4. **Si el filtro de ruido deja pasar algo nuevo.** El patrón es el de
+   `domain.md` §5.
 
-Si sale, la Fase 0 está terminada y toca la Fase 1. Si no, el mensaje de la
-pantalla dice cuál de las cinco causas fue.
+Después, la Fase 1b: entregas con retroalimentación, perfil y carnet, buscador
+global.
 
 ---
 
@@ -58,6 +67,42 @@ lo dejaba obsoleto y contradecía la documentación.
 - Tailwind 4 con los tokens de Suki copiados de la skill, sin editar
 - Manifest MV3 con **solo** `storage` y `webRequest`, un único host
 - `pnpm typecheck`, `pnpm lint` y `pnpm build` en verde
+
+### Fase 1a — Pendientes, cursos, detalle y notas
+
+- `src/api/pending.ts` — clasificación por urgencia y orden por fecha. Puro: el
+  "ahora" se pasa como argumento, así que se prueba sin reloj del sistema
+- `src/api/noise.ts` — filtro del ruido de `domain.md` §5
+- `src/api/average.ts` — nota por curso y promedio. Prefiere el total oficial de
+  Moodle; si no está, pondera con `weightraw`
+- `src/api/calendar.ts`, `contents.ts`, `grades.ts` — las tres llamadas nuevas
+- `src/background/data.ts` — carga en el worker, donde vive la pausa de 600 ms
+- Cuatro pantallas: Pendientes, Cursos, Detalle de curso y Notas, más
+  navegación en Zustand
+- 34 tests nuevos (55 en total)
+
+**Decisiones de diseño de esta fase:**
+
+- Los pendientes van en **una sola lista cronológica**, no agrupada por curso:
+  agrupar por curso es exactamente lo que obliga hoy a abrir once pestañas
+- La urgencia se marca con borde de color **y etiqueta de texto** (Vencido, Hoy,
+  Esta semana, Más adelante). El color solo no informa a quien no lo distingue.
+  Los colores son los funcionales del sistema, no acentos de marca: error
+  `#FF3B30`, advertencia `#FFBE0B`, información `#3A86FF`. Todos ≥ 4,9:1 sobre
+  la superficie de tarjeta, y las filas no cambian de fondo al pasar el cursor
+  para que ninguno caiga por debajo de AA
+- **Vacío y fallo se dicen distinto.** Una lista de pendientes vacía no dice
+  "no tienes nada": dice que la plataforma respondió sin devolver nada y que a
+  mitad de ciclo eso conviene comprobarlo
+- Las notas son **11 llamadas**, así que un fallo suelto no tumba la tabla: el
+  curso que falla se marca en su fila y el resto se muestra. Es el estado
+  "parcial" del sistema de diseño
+- El promedio se presenta como **media simple**, y la pantalla dice por qué: la
+  API no expone créditos, así que ponderar exigiría inventarlos
+
+Verificado en Brave: las cuatro vistas con datos de prueba, el estado vacío de
+pendientes, y contra la plataforma real un token inválido → `exception` con
+estado 200 → "La conexión con tu cuenta ya no vale".
 
 ### Fase 0 · paso 3 — Autenticación, cliente y pantalla
 
@@ -145,6 +190,11 @@ detalle completo está en `domain.md` §2.
 **2026-09-04** — Ingeniería inversa completada. Scripts de Python funcionando y
 material del ciclo 2026-2 archivado. Decidida la arquitectura de extensión.
 Redactada la especificación. Creados los archivos de contexto.
+
+**2026-09-04** — Fase 0 cerrada y verificada con sesión real. Primer commit
+(`c499d9a`), 87 archivos, sin secretos. Fase 1a escrita: pendientes en lista
+cronológica única, cursos, detalle de curso con el ruido filtrado, y notas con
+promedio y estado parcial. `project.md` actualizado con la partición 1a/1b.
 
 **2026-09-04** — Fase 0 completa a falta de la prueba con sesión real.
 Retirada de los tres documentos la premisa falsa de que `server.php` no envía

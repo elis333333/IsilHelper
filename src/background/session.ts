@@ -1,28 +1,12 @@
-/** Compone las llamadas de la Fase 0 y traduce los errores de la capa de API
+/** Estado de sesión: quién soy, y traducción de los errores de la capa de API
  *  a las causas que la interfaz sabe explicar. */
 
 import { getSiteInfo, getUserCourses } from "../api/site";
-import type { ApiError } from "../api/errors";
 import type { AuthError } from "./auth";
 import { requestToken } from "./auth";
-import { clearToken, hasToken } from "../lib/storage";
+import { apiFailure } from "./data";
+import { clearToken, hasToken, writeUserId } from "../lib/storage";
 import type { FailureReason, SessionSnapshot } from "../lib/messages";
-
-function apiFailure(error: ApiError): FailureReason {
-  switch (error.kind) {
-    case "waf":
-      return "waf";
-    case "moodle":
-      return error.errorcode === "invalidtoken" ? "invalidtoken" : "unexpected";
-    case "network":
-    case "timeout":
-      return "network";
-    case "notoken":
-      return "invalidtoken";
-    case "unexpected":
-      return "unexpected";
-  }
-}
 
 function authFailure(error: AuthError): FailureReason {
   return error.kind === "nosession" ? "nosession" : "unexpected";
@@ -33,6 +17,9 @@ export async function readSession(): Promise<SessionSnapshot> {
 
   const info = await getSiteInfo();
   if (!info.ok) return { state: "failed", reason: apiFailure(info.error) };
+
+  // Se guarda para que las demás pantallas no repitan `site_info`.
+  await writeUserId(info.value.userid);
 
   const courses = await getUserCourses(info.value.userid);
   if (!courses.ok) return { state: "failed", reason: apiFailure(courses.error) };

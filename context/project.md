@@ -113,9 +113,27 @@ src/
 "conectado como X — N cursos", detección de token inválido, manejo del 418.
 *Valida la pieza de mayor riesgo. Nada se construye encima hasta que funcione.*
 
-**Fase 1 — Dashboard.** Inicio con pendientes de los 11 cursos ordenados por
-fecha; grilla de cursos con progreso; detalle de curso; tabla de notas con
-promedio; entregas con retroalimentación; perfil y carnet; buscador global.
+**Fase 1 — Dashboard.** Partida en dos: la 1a es el valor central y se hace
+primero; la 1b espera a que la 1a esté sólida.
+
+*Fase 1a — el núcleo.*
+
+1. **Pendientes.** `core_calendar_get_action_events_by_timesort`: los 11 cursos
+   en una sola lista ordenada por fecha de entrega, **no agrupada por curso**.
+   Es la pantalla que hoy obliga a abrir curso por curso, y la que justifica la
+   extensión por sí sola. Marca lo vencido, lo de hoy y lo de esta semana.
+2. **Cursos.** Grilla con el avance.
+3. **Detalle de curso.** `core_course_get_contents`: secciones, contenidos,
+   sílabo, complementarios y evaluaciones, con estado de completado. Filtra el
+   ruido documentado en `domain.md` §5.
+4. **Notas.** `gradereport_user_get_grade_items`, todos los cursos en una tabla,
+   con promedio.
+
+*Fase 1b — lo que suma encima.*
+
+5. Entregas con retroalimentación
+6. Perfil y carnet
+7. Buscador global
 
 **Fase 2 — Descargas de Moodle.** Individual y masiva de `pluginfile.php`;
 estructura `Curso / Sección / Tema /`; cola con progreso, pausa y reanudación;

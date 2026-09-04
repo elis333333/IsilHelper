@@ -2,7 +2,16 @@ import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", "node_modules", ".gitignore", ".claude"] },
+  // Fuera del lint: lo que no es código nuestro.
+  {
+    ignores: [
+      "dist",
+      "node_modules",
+      ".venv",
+      "downloads",
+      ".claude",
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

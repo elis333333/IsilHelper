@@ -9,7 +9,8 @@
 
 import { registerTokenCapture } from "./auth";
 import { connect, disconnect, readSession } from "./session";
-import type { BackgroundRequest, SessionSnapshot } from "../lib/messages";
+import { loadContents, loadCourses, loadGrades, loadPending } from "./data";
+import type { BackgroundRequest, ResponseMap } from "../lib/messages";
 
 registerTokenCapture();
 
@@ -19,7 +20,9 @@ chrome.action.onClicked.addListener(() => {
   void chrome.tabs.create({ url: chrome.runtime.getURL("src/ui/index.html") });
 });
 
-function handle(request: BackgroundRequest): Promise<SessionSnapshot> {
+function handle(
+  request: BackgroundRequest,
+): Promise<ResponseMap[BackgroundRequest["type"]]> {
   switch (request.type) {
     case "session":
       return readSession();
@@ -27,11 +30,23 @@ function handle(request: BackgroundRequest): Promise<SessionSnapshot> {
       return connect();
     case "disconnect":
       return disconnect();
+    case "pending":
+      return loadPending();
+    case "courses":
+      return loadCourses();
+    case "contents":
+      return loadContents(request.courseId, request.courseName);
+    case "grades":
+      return loadGrades();
   }
 }
 
 chrome.runtime.onMessage.addListener(
-  (request: BackgroundRequest, _sender, respond: (s: SessionSnapshot) => void) => {
+  (
+    request: BackgroundRequest,
+    _sender,
+    respond: (response: ResponseMap[BackgroundRequest["type"]]) => void,
+  ) => {
     handle(request).then(respond);
     return true; // la respuesta es asíncrona
   },
