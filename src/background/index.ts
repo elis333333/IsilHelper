@@ -1,0 +1,38 @@
+/**
+ * Punto de entrada del service worker.
+ *
+ * Todo listener se registra de forma SÍNCRONA en el arranque. El worker de MV3
+ * se duerme, y un listener añadido dentro de un callback o después de un
+ * `await` se pierde el evento que lo habría despertado. Es la causa número uno
+ * de "a veces funciona".
+ */
+
+import { registerTokenCapture } from "./auth";
+import { connect, disconnect, readSession } from "./session";
+import type { BackgroundRequest, SessionSnapshot } from "../lib/messages";
+
+registerTokenCapture();
+
+// La interfaz vive en una pestaña. Sin `default_popup` en el manifest, este
+// evento sí dispara al pulsar el ícono.
+chrome.action.onClicked.addListener(() => {
+  void chrome.tabs.create({ url: chrome.runtime.getURL("src/ui/index.html") });
+});
+
+function handle(request: BackgroundRequest): Promise<SessionSnapshot> {
+  switch (request.type) {
+    case "session":
+      return readSession();
+    case "connect":
+      return connect();
+    case "disconnect":
+      return disconnect();
+  }
+}
+
+chrome.runtime.onMessage.addListener(
+  (request: BackgroundRequest, _sender, respond: (s: SessionSnapshot) => void) => {
+    handle(request).then(respond);
+    return true; // la respuesta es asíncrona
+  },
+);

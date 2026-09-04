@@ -1,0 +1,130 @@
+/* =========================================================
+   SUKI — Capa de componentes de producto propio
+   Se carga DESPUÉS de tokens.css.
+   Dark-first, densidad cómoda, radio 0, sin sombras.
+
+   Para software entregado a clientes NO se usa este archivo:
+   ver la skill suki-client-ui.
+   ========================================================= */
+
+/* Acento dominante del producto.
+   Suki: --color-action (#06D6A0). Suki Labs: --color-evolve (#3A86FF).
+   Producto con marca propia: su color, verificado a AA con contraste.py. */
+:root {
+  --acento:      var(--color-action);
+  --sobre-acento: var(--color-base);   /* texto encima del acento */
+
+  /* Densidad cómoda */
+  --control-alto:            40px;
+  --control-alto-principal:  48px;
+  --fila-alto:               48px;
+  --panel-padding:           var(--space-6);   /* 24 */
+  --campo-separacion:        var(--space-6);   /* 24 */
+  --grupo-separacion:        var(--space-8);   /* 32 */
+  --bloque-separacion:       var(--space-12);  /* 48 */
+}
+
+[data-marca="labs"] {
+  --acento: var(--color-evolve);       /* #3A86FF · 5,58:1 sobre #0D0D0D */
+  --sobre-acento: var(--color-base);   /* blanco encima da 3,48: solo texto grande */
+}
+
+/* ---------- Superficies ---------- */
+.app     { background: var(--color-base); color: var(--color-text); }
+.panel   { background: var(--color-surface-1); border-right: 1px solid var(--color-border); }
+.tarjeta { background: var(--color-surface); border: 1px solid var(--color-border); padding: var(--panel-padding); }
+.tarjeta:hover { background: var(--color-elevated); }
+/* Sobre #242424 el rosa cae a 4,05 y el azul a 4,46: el texto de acento sube */
+.tarjeta:hover .dato-acento { color: var(--color-text); }
+
+/* ---------- Botones ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  height: var(--control-alto); padding-inline: var(--space-6);
+  font-family: var(--font-body); font-weight: var(--weight-semibold);
+  border: 1px solid transparent; border-radius: 0;
+  transition: background var(--motion-fast) var(--motion-ease),
+              color var(--motion-fast) var(--motion-ease);
+}
+.btn--principal {
+  height: var(--control-alto-principal); padding-inline: var(--space-8);
+  background: var(--acento); color: var(--sobre-acento); border-color: var(--acento);
+}
+.btn--principal:hover { background: var(--color-base); color: var(--acento); }
+.btn--secundario { background: transparent; color: var(--color-text); border-color: var(--color-border); }
+.btn--secundario:hover { background: var(--color-elevated); }
+.btn--destructivo { background: transparent; color: var(--color-error); border-color: var(--color-error); }
+.btn--destructivo:hover { background: var(--color-error); color: var(--color-base); }
+.btn:disabled { background: var(--color-disabled); color: var(--color-base); cursor: not-allowed; }
+
+/* ---------- Campos ---------- */
+.campo { display: flex; flex-direction: column; gap: var(--space-2); }
+.campo + .campo { margin-top: var(--campo-separacion); }
+.campo__etiqueta { font-size: var(--text-body-sm); font-weight: var(--weight-medium); color: var(--color-text); }
+.campo__control {
+  height: var(--control-alto); padding-inline: var(--space-4);
+  background: var(--color-surface); color: var(--color-text);
+  border: 1px solid var(--color-border); border-radius: 0;
+}
+.campo__control::placeholder { color: var(--color-disabled); }
+.campo__control:focus { border-color: var(--acento); outline: 1px solid var(--acento); }
+.campo__control[aria-invalid="true"] { border-color: var(--color-error); }
+.campo__error {
+  display: flex; align-items: center; gap: var(--space-2);
+  font-size: var(--text-body-sm); color: var(--color-error);
+}
+
+/* ---------- Tabla ---------- */
+.tabla { width: 100%; border-collapse: collapse; }
+.tabla thead th {
+  font-family: var(--font-mono); font-size: var(--text-body-sm);
+  text-transform: uppercase; letter-spacing: var(--tracking-mono-label);
+  color: var(--color-text-subtle); text-align: left;
+  padding-block: var(--space-3); border-bottom: 1px solid var(--color-border);
+}
+.tabla tbody tr { height: var(--fila-alto); border-bottom: 1px solid var(--color-border); }
+.tabla tbody tr:hover { background: var(--color-elevated); }
+.tabla td { padding-block: var(--space-3); }
+.tabla .cifra { text-align: right; font-variant-numeric: tabular-nums; }
+/* sin relleno alternado a propósito */
+
+/* ---------- Navegación ---------- */
+.nav-item {
+  display: flex; align-items: center; gap: var(--space-3);
+  height: var(--control-alto); padding-inline: var(--space-4);
+  color: var(--color-text-muted); text-decoration: none;
+}
+.nav-item:hover { background: var(--color-elevated); }
+/* El activo cambia color de texto Y barra: la barra sola sería color como único portador */
+.nav-item[aria-current="page"] {
+  color: var(--color-heading);
+  border-left: 3px solid var(--acento);
+}
+
+/* ---------- Modal ---------- */
+.velo   { position: fixed; inset: 0; background: rgb(13 13 13 / 0.7); }  /* sin desenfoque */
+.modal  {
+  background: var(--color-elevated); border: 1px solid var(--color-border);
+  border-radius: 0; max-width: 560px; padding: var(--space-8);
+}
+
+/* ---------- Estados ----------
+   Cada uno lleva ícono y texto además del color. */
+.estado { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--text-body-sm); }
+.estado--exito       { color: var(--color-success); }
+.estado--error       { color: var(--color-error); }
+.estado--advertencia { color: var(--color-warning); }
+.estado--info        { color: var(--color-info); }
+
+/* ---------- Foco ---------- */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+
+/* ---------- Firma de respaldo ---------- */
+.firma-labs {
+  font-family: var(--font-body); font-weight: var(--weight-regular);
+  font-size: var(--text-caption); line-height: var(--leading-caption);
+  color: var(--color-text-subtle);
+}

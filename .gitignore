@@ -1,0 +1,9 @@
+.env
+.venv/
+client_secret_*.json
+downloads/
+*.part
+node_modules/
+dist/
+context/chatgpt*
+files.zip

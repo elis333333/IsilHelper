@@ -1,0 +1,91 @@
+/* =========================================================
+   SUKI — Tailwind v4
+   Se importa desde el CSS principal, después de @import "tailwindcss".
+   No hay tailwind.config.js en v4: el tema vive aquí.
+
+   Solo para piezas propias de Suki. El software entregado a
+   clientes usa los colores del cliente (skill suki-client-ui).
+   ========================================================= */
+
+@theme {
+  /* ---------- Color de marca · verbo · familia ---------- */
+  --color-action:    #06D6A0;  /* Construir   · familia C */
+  --color-adapt:     #8338EC;  /* Adaptar     · familia A */
+  --color-integrate: #FFBE0B;  /* Integrar    · familia B */
+  --color-scale:     #FF006E;  /* Escalar     · familia D */
+  --color-evolve:    #3A86FF;  /* Evolucionar · familia E */
+
+  /* ---------- Neutros ---------- */
+  --color-base:          #0D0D0D;
+  --color-surface-1:     #141414;
+  --color-surface:       #1A1A1A;
+  --color-elevated:      #242424;
+  --color-border-strong: #333333;
+  --color-border:        #4D4D4D;
+  --color-disabled:      #737373;  /* 4,1:1 — no apto para texto */
+  --color-text-subtle:   #999999;
+  --color-text-muted:    #B3B3B3;
+  --color-text:          #CCCCCC;
+  --color-heading:       #E6E6E6;
+  --color-light:         #F5F5F5;
+
+  /* ---------- Funcionales · solo interfaces ---------- */
+  --color-error:       #FF3B30;
+  --color-error-light: #C62828;
+
+  /* ---------- Tipografía ---------- */
+  --font-brand: "Montserrat", Arial, sans-serif;
+  --font-body:  "Inter", "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono:  "JetBrains Mono", Consolas, "Courier New", monospace;
+
+  --text-display:      3rem;      --text-display--line-height:  3.5rem;
+  --text-display--letter-spacing: -0.02em;
+  --text-h1:           2.25rem;   --text-h1--line-height:       2.75rem;
+  --text-h1--letter-spacing:      -0.01em;
+  --text-h2:           1.875rem;  --text-h2--line-height:       2.375rem;
+  --text-h2--letter-spacing:      -0.01em;
+  --text-h3:           1.5rem;    --text-h3--line-height:       2rem;
+  --text-h4:           1.25rem;   --text-h4--line-height:       1.75rem;
+  --text-body-lg:      1.125rem;  --text-body-lg--line-height:  1.875rem;
+  --text-body:         1rem;      --text-body--line-height:     1.625rem;
+  --text-body-sm:      0.875rem;  --text-body-sm--line-height:  1.375rem;
+  --text-caption:      0.75rem;   --text-caption--line-height:  1.125rem;
+  --text-label:        0.75rem;   --text-label--line-height:    1rem;
+  --text-label--letter-spacing:   0.06em;
+  --text-mono:         0.875rem;  --text-mono--line-height:     1.375rem;
+
+  /* ---------- Espaciado · escala de 8 ----------
+     Tailwind multiplica --spacing por el número de la utilidad:
+     p-1=4px · p-2=8px · p-4=16px · p-6=24px · p-8=32px · p-12=48px
+     p-16=64px · p-24=96px · p-32=128px.
+     No usar valores arbitrarios tipo p-[30px]. */
+  --spacing: 4px;
+
+  /* ---------- Retícula ---------- */
+  --container-content: 1200px;
+  --container-max:     1280px;
+
+  /* ---------- Forma ---------- */
+  --radius-none: 0;   /* rounded-none en todo el sistema */
+  --radius-box:  8%;  /* única excepción: la cajita del logotipo */
+
+  /* ---------- Movimiento ---------- */
+  --ease-suki:      cubic-bezier(0.2, 0, 0, 1);
+  --animate-duration-fast: 150ms;
+  --animate-duration-base: 250ms;
+}
+
+/* Modo claro: impresión, documentos, correo */
+@layer base {
+  [data-theme="light"] {
+    --color-page: var(--color-light);
+    --color-ink:  var(--color-base);
+  }
+  * { border-radius: 0; }  /* radio 0 por defecto en todo el sistema */
+}
+
+/* Reglas que las utilidades no pueden imponer solas:
+   - Sobre bg-action y bg-integrate el texto es text-base (#0D0D0D). Nunca text-white.
+   - text-adapt no se usa sobre fondo oscuro: 3,5:1.
+   - Sin shadow-*, sin bg-gradient-*, sin backdrop-blur.
+   - Un solo color de acento por composición. */

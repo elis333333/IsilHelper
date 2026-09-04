@@ -1,0 +1,172 @@
+/* =========================================================
+   SUKI — Tokens del sistema visual
+   Derivado del Manual de Marca v1.0 · 03-visual.md
+   Ningún otro archivo declara colores, espaciados, radios
+   ni duraciones. Todo sale de aquí.
+
+   ATENCIÓN: esta paleta es SOLO para piezas propias de Suki.
+   El software entregado a un cliente lleva los colores del
+   cliente. Ver la skill suki-client-ui.
+   ========================================================= */
+
+:root {
+  /* ---------- Color de marca · verbo · familia ---------- */
+  --color-action:      #06D6A0;  /* Construir   · familia C · acción: botones, enlaces, activos */
+  --color-adapt:       #8338EC;  /* Adaptar     · familia A */
+  --color-integrate:   #FFBE0B;  /* Integrar    · familia B */
+  --color-scale:       #FF006E;  /* Escalar     · familia D */
+  --color-evolve:      #3A86FF;  /* Evolucionar · familia E · Suki Labs */
+
+  /* ---------- Neutros ---------- */
+  --color-base:          #0D0D0D;  /* fondo base */
+  --color-surface-1:     #141414;  /* superficie nivel 1 */
+  --color-surface:       #1A1A1A;  /* superficie nivel 2, tarjetas */
+  --color-elevated:      #242424;  /* superficie elevada, hover */
+  --color-border-strong: #333333;  /* borde marcado */
+  --color-border:        #4D4D4D;  /* borde sutil, divisores */
+  --color-disabled:      #737373;  /* 4,1:1 — NO apto para texto */
+  --color-text-subtle:   #999999;  /* terciario · 6,8:1 */
+  --color-text-muted:    #B3B3B3;  /* secundario · 9,3:1 */
+  --color-text:          #CCCCCC;  /* principal · 12,1:1 · gris del logotipo */
+  --color-heading:       #E6E6E6;  /* títulos · 15,6:1 */
+  --color-light:         #F5F5F5;  /* fondo del modo claro */
+  --color-white:         #FFFFFF;  /* texto sobre color · 19,4:1 */
+
+  /* ---------- Roles semánticos · modo oscuro (oficial) ---------- */
+  --bg:            var(--color-base);
+  --bg-surface:    var(--color-surface);
+  --bg-elevated:   var(--color-elevated);
+  --fg:            var(--color-text);
+  --fg-muted:      var(--color-text-muted);
+  --fg-subtle:     var(--color-text-subtle);
+  --fg-heading:    var(--color-heading);
+  --border:        var(--color-border);
+  --on-accent:     var(--color-base);  /* texto encima de verde y amarillo: SIEMPRE oscuro */
+
+  /* ---------- Funcionales · solo dentro de interfaces ---------- */
+  --color-error:   #FF3B30;  /* 5,5:1 sobre #0D0D0D · 4,9:1 sobre #1A1A1A */
+  --color-success: var(--color-action);
+  --color-warning: var(--color-integrate);
+  --color-info:    var(--color-evolve);
+  /* El estado nunca se comunica solo con color: siempre ícono + texto. */
+
+  /* ---------- Tipografía ---------- */
+  --font-brand: "Montserrat", Arial, sans-serif;
+  --font-body:  "Inter", "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono:  "JetBrains Mono", Consolas, "Courier New", monospace;
+
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;   /* máximo: nunca 800 ni 900 */
+
+  --text-display:  3rem;      /* 48 / 56 · Montserrat 600 */
+  --text-h1:       2.25rem;   /* 36 / 44 · Inter 700 */
+  --text-h2:       1.875rem;  /* 30 / 38 · Inter 600 */
+  --text-h3:       1.5rem;    /* 24 / 32 · Inter 600 */
+  --text-h4:       1.25rem;   /* 20 / 28 · Inter 600 */
+  --text-body-lg:  1.125rem;  /* 18 / 30 */
+  --text-body:     1rem;      /* 16 / 26 */
+  --text-body-sm:  0.875rem;  /* 14 / 22 */
+  --text-caption:  0.75rem;   /* 12 / 18 */
+  --text-label:    0.75rem;   /* 12 / 16 · Inter 600, mayúsculas */
+  --text-mono:     0.875rem;  /* 14 / 22 */
+
+  --leading-display: 1.1667;  /* 56/48 */
+  --leading-h1:      1.2222;
+  --leading-h2:      1.2667;
+  --leading-h3:      1.3333;
+  --leading-body:    1.625;   /* nunca por debajo de 1.4 en párrafos */
+  --leading-caption: 1.5;
+
+  --tracking-display: -0.02em;
+  --tracking-heading: -0.01em;
+  --tracking-body:     0;
+  --tracking-label:    0.06em;
+  --tracking-mono-label: 0.08em;  /* etiquetas mono de piezas brutalistas */
+
+  --measure: 65ch;  /* 45–90 caracteres por línea */
+
+  /* ---------- Espaciado · base 4, escala de 8 ---------- */
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
+  --space-32: 128px;
+  /* No existen valores intermedios. 30px no es una opción: es 32 o 24. */
+
+  /* ---------- Retícula ---------- */
+  --container-max:  1280px;
+  --content-max:    1200px;
+  --gutter:           24px;
+  --margin-desktop:   64px;  /* 64–120 */
+  --margin-tablet:    48px;
+  --margin-mobile:    20px;
+
+  /* ---------- Forma ---------- */
+  --radius:      0;    /* todo el sistema */
+  --radius-box:  8%;   /* única excepción: la cajita del logotipo */
+  --border-width:      1px;
+  --border-width-zone: 4px;  /* separación de zonas en piezas brutalistas */
+
+  /* ---------- Movimiento ---------- */
+  --motion-fast: 150ms;  /* microinteracciones */
+  --motion-base: 250ms;  /* transiciones de bloque */
+  --motion-max:  400ms;  /* máximo absoluto */
+  --motion-ease: cubic-bezier(0.2, 0, 0, 1);
+  --motion-dot-stagger: 60ms;  /* desfase de los cinco puntos */
+}
+
+/* ---------- Modo claro · impresión, documentos, correo ---------- */
+[data-theme="light"] {
+  --bg:          var(--color-light);
+  --bg-surface:  var(--color-white);
+  --bg-elevated: var(--color-white);
+  --fg:          var(--color-base);
+  --fg-muted:    #4D4D4D;
+  --fg-subtle:   #737373;  /* 4,35:1 sobre #F5F5F5 — límite, solo texto ≥ 18px */
+  --fg-heading:  var(--color-base);
+  --border:      var(--color-text);   /* #CCCCCC */
+  --color-error: #C62828;             /* 5,2:1 sobre #F5F5F5 */
+}
+
+/* ---------- Base ---------- */
+*, *::before, *::after { box-sizing: border-box; border-radius: var(--radius); }
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  text-align: left;   /* sin texto justificado, nunca */
+}
+
+/* Sin sombras, sin degradados, sin efectos de cristal.
+   La profundidad se consigue con superficie + borde de 1px. */
+.superficie { background: var(--bg-surface); border: var(--border-width) solid var(--border); }
+.elevada    { background: var(--bg-elevated); border: var(--border-width) solid var(--border); }
+
+/* Texto encima de verde y de amarillo: SIEMPRE oscuro. Blanco da 1,9:1 y 1,7:1. */
+.sobre-accion,
+.sobre-advertencia { color: var(--on-accent); }
+
+.etiqueta {
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

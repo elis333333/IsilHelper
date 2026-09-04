@@ -1,0 +1,131 @@
+/* =========================================================
+   SUKI — Hoja de estilo de documentos
+   Propuesta, presupuesto, cotización e informes de Labs.
+   Se carga DESPUÉS de tokens.css.
+
+   Portada oscura, interior claro. Un solo acento en todo el
+   documento: el de la familia del proyecto, declarado abajo.
+   ========================================================= */
+
+/* El acento del documento se define UNA vez, aquí.
+   Familia A #8338EC · B #FFBE0B · C #06D6A0 · D #FF006E · E #3A86FF */
+:root { --acento-documento: var(--color-adapt); }
+
+@page {
+  size: A4 portrait;
+  /* Márgenes asimétricos: la columna izquierda ancha es la de etiquetas */
+  margin: 22mm 18mm 22mm 45mm;
+}
+@page :first { margin: 0; }  /* la portada va a sangre */
+
+/* ---------- Portada ---------- */
+.portada {
+  background: var(--color-base);
+  color: var(--color-heading);
+  width: 210mm;
+  height: 297mm;
+  padding: 22mm;
+  break-after: page;
+}
+.portada__titulo {
+  font-family: var(--font-brand);
+  font-weight: var(--weight-semibold);
+  font-size: 48pt;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+}
+.portada__cliente { font-size: 14pt; color: var(--color-text); margin-top: 12mm; }
+.portada__fecha   { font-size: 10pt; color: var(--color-text-subtle); }
+
+/* ---------- Interior en modo claro ---------- */
+.documento {
+  background: var(--color-light);
+  color: var(--color-base);
+  font-family: var(--font-body);
+  font-size: 11pt;
+  line-height: 1.55;      /* nunca por debajo de 140 % */
+  text-align: left;       /* sin texto justificado */
+  max-width: 65ch;
+}
+
+h1, h2, h3 { font-family: var(--font-body); font-weight: var(--weight-semibold); break-after: avoid; }
+h1 { font-size: 24pt; line-height: 1.15; border-top: 3pt solid var(--color-base); padding-top: 4mm; }
+h2 { font-size: 16pt; line-height: 1.2; margin-top: 10mm; }
+h3 { font-size: 12pt; margin-top: 6mm; }
+
+p  { margin-block: 0 4mm; }
+strong { font-weight: var(--weight-semibold); }
+.secundario { color: #4D4D4D; }
+
+/* ---------- Etiquetas en la columna izquierda ---------- */
+.etiqueta-apartado {
+  font-family: var(--font-mono);
+  font-size: 9pt;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-mono-label);
+  color: #4D4D4D;
+  position: absolute;
+  left: 12mm;
+  width: 30mm;
+}
+.nota-margen { font-size: 9pt; color: #4D4D4D; }
+
+/* ---------- Tablas ----------
+   Regla superior 3pt, inferior 1pt, encabezado mono mayúsculas,
+   sin relleno alternado, sin color de fondo. */
+table { width: 100%; border-collapse: collapse; margin-block: 6mm; break-inside: avoid; }
+thead th {
+  font-family: var(--font-mono);
+  font-size: 9pt;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-mono-label);
+  text-align: left;
+  border-top: 3pt solid var(--color-base);
+  border-bottom: 1pt solid var(--color-base);
+  padding: 2mm 3mm 2mm 0;
+}
+tbody td { border-bottom: 1px solid #CCCCCC; padding: 2.5mm 3mm 2.5mm 0; vertical-align: top; }
+tbody tr:last-child td { border-bottom: 1pt solid var(--color-base); }
+td.cifra, th.cifra { text-align: right; font-variant-numeric: tabular-nums; }
+tr.total td { font-weight: var(--weight-semibold); border-top: 1pt solid var(--color-base); }
+
+/* ---------- Los cinco puntos ---------- */
+.puntos { display: flex; gap: 3mm; margin-block: 4mm; }
+.punto  { width: 3mm; height: 3mm; border-radius: 50%; }  /* mínimo impreso 2mm */
+.punto--construir   { background: var(--color-action); }
+.punto--adaptar     { background: var(--color-adapt); }
+.punto--integrar    { background: var(--color-integrate); }
+.punto--escalar     { background: var(--color-scale); }
+.punto--evolucionar { background: var(--color-evolve); }
+.punto--pendiente   { background: #4D4D4D; }
+
+/* ---------- Acento ----------
+   En modo claro el acento NO colorea texto: el verde da 1,7:1 y el
+   amarillo 1,5:1 sobre #F5F5F5. Colorea un bloque, una regla o un punto. */
+.regla-acento  { border-top: 3pt solid var(--acento-documento); }
+.bloque-acento { background: var(--acento-documento); color: var(--color-base); padding: 4mm; }
+/* Excepción: sobre morado el texto es blanco (5,15:1 sobre claro, 5,61 sobre blanco) */
+.bloque-acento.es-morado { color: var(--color-white); }
+
+/* ---------- Marcadores sin confirmar ----------
+   Rompen a la vista a propósito. No se rellenan a ojo. */
+.marcador {
+  background: #FFBE0B;
+  color: var(--color-base);
+  font-family: var(--font-mono);
+  padding: 0 1mm;
+}
+
+/* ---------- Encabezado y pie ---------- */
+.encabezado { position: running(encabezado); font-size: 9pt; color: #4D4D4D; }
+.pie        { position: running(pie); font-size: 9pt; color: #4D4D4D; }
+@page { @top-left { content: element(encabezado); } @bottom-right { content: counter(page); } }
+@page :first { @top-left { content: none; } @bottom-right { content: none; } }
+
+/* ---------- Impresión ---------- */
+@media print {
+  .documento { background: var(--color-light); }
+  a { text-decoration: none; color: inherit; }
+  a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 8pt; color: #4D4D4D; }
+  h1, h2, h3, table, .puntos { break-inside: avoid; }
+}

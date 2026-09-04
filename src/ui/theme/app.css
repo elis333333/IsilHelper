@@ -1,0 +1,8 @@
+/* Orden obligatorio: Tailwind, tema (utilidades), tokens (roles y base),
+   componentes de producto, identidad del producto. */
+@import "tailwindcss";
+@import "./suki-theme.css";
+@import "./tokens.css";
+@import "./ui.css";
+@import "./product.css";
+@import "./layout.css";

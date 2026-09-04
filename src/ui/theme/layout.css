@@ -1,0 +1,59 @@
+/* Maquetación de pantalla. Todos los valores salen de tokens.css. */
+
+.pantalla {
+  min-height: 100vh;
+  background: var(--color-base);
+  padding: var(--space-12) var(--space-8);
+}
+
+.pantalla__centro {
+  max-width: var(--content-max);
+  margin: 0 auto;
+}
+
+.titulo {
+  font-size: var(--text-h1);
+  line-height: var(--leading-h1);
+  letter-spacing: var(--tracking-heading);
+  font-weight: var(--weight-bold);
+  color: var(--color-heading);
+  margin: var(--space-3) 0 var(--space-8);
+}
+
+.subtitulo {
+  font-size: var(--text-h3);
+  line-height: var(--leading-h3);
+  font-weight: var(--weight-semibold);
+  color: var(--color-heading);
+  margin: 0 0 var(--space-2);
+}
+
+.parrafo {
+  max-width: var(--measure);
+  margin: 0 0 var(--space-4);
+  color: var(--color-text);
+}
+
+.parrafo--apagado { color: var(--color-text-muted); }
+
+.bloque + .bloque { margin-top: var(--space-12); }
+
+.pie {
+  margin-top: var(--space-16);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-border);
+}
+
+.acciones {
+  display: flex;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+}
+
+.cifra {
+  font-family: var(--font-mono);
+  font-size: var(--text-h2);
+  line-height: var(--leading-h2);
+  color: var(--acento);
+  font-variant-numeric: tabular-nums;
+}

@@ -1,0 +1,194 @@
+/* =========================================================
+   SUKI — Dirección de arte brutalista
+   Se carga DESPUÉS de tokens.css: aquí no se declara ningún
+   color, espaciado ni duración nuevo, solo composición.
+
+   Solo para piezas de comunicación de Suki. Las interfaces
+   de producto usan suki-product-ui; el software de cliente,
+   suki-client-ui.
+   ========================================================= */
+
+/* ---------- Escala extrema ---------- */
+.titular-portada {
+  font-family: var(--font-brand);
+  font-weight: var(--weight-semibold);
+  font-size: clamp(2.75rem, 11vw, 9rem);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: var(--color-heading);
+}
+.titular-seccion {
+  font-family: var(--font-brand);
+  font-weight: var(--weight-semibold);
+  font-size: clamp(2rem, 7vw, 5.5rem);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+}
+.numero-seccion {
+  font-family: var(--font-brand);
+  font-weight: var(--weight-semibold);
+  font-size: clamp(6rem, 22vw, 18rem);
+  line-height: 0.8;
+  letter-spacing: -0.04em;
+}
+/* La nota a 9pt junto al número gigante: la tensión está en la distancia */
+.nota-al-pie { font-size: var(--text-caption); color: var(--color-text-subtle); }
+
+/* ---------- Etiquetas en monoespaciada ---------- */
+.etiqueta-mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-mono);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-mono-label);  /* +8 % */
+  color: var(--color-text-subtle);
+}
+
+/* ---------- Bloques macizos a sangre ---------- */
+.bloque-sangre {
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  padding: var(--space-24) var(--margin-desktop);
+  border-radius: 0;
+}
+
+/* ---------- Reglas gruesas ---------- */
+.regla-zona  { border-top: var(--border-width-zone) solid var(--color-text); }
+.regla-tabla { border-top: 3px solid var(--color-text); }
+table { border-collapse: collapse; }
+thead th {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-mono-label);
+  border-top: 3px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  text-align: left;
+}
+tbody tr { background: none; }  /* sin relleno alternado */
+
+/* ---------- Retícula expuesta ---------- */
+.reticula-visible {
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--color-border) 0 1px,
+    transparent 1px calc(100% / 12)
+  );
+  opacity: 0.2;
+}
+
+/* ---------- Márgenes asimétricos ---------- */
+.pagina-asimetrica {
+  padding: 22mm 18mm 22mm 45mm;  /* la columna izquierda ancha es la de etiquetas */
+}
+.columna-etiquetas { position: absolute; left: 0; width: 45mm; padding-left: 12mm; }
+
+/* ---------- Los cinco verbos ---------- */
+.verbo {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--space-24) var(--margin-desktop);
+  border-radius: 0;
+}
+.verbo__etiqueta {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-mono-label);
+  margin-bottom: var(--space-8);
+}
+.verbo__titular {
+  font-family: var(--font-brand);
+  font-weight: var(--weight-semibold);
+  font-size: clamp(2.5rem, 8vw, 6rem);
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  max-width: 18ch;
+}
+.verbo__texto   { font-size: var(--text-body-lg); max-width: var(--measure); margin-top: var(--space-6); }
+.verbo__entrega { font-size: var(--text-body-sm); margin-top: var(--space-12); opacity: 0.8; }
+
+/* Texto oscuro sobre verde, amarillo, rosa y azul. Blanco solo sobre morado.
+   Ver la tabla de contraste en suki-brand-tokens. */
+.verbo--construir   { background: var(--color-action);    color: var(--color-base); }
+.verbo--adaptar     { background: var(--color-adapt);     color: var(--color-white); }
+.verbo--integrar    { background: var(--color-integrate); color: var(--color-base); }
+.verbo--escalar     { background: var(--color-scale);     color: var(--color-base); }
+.verbo--evolucionar { background: var(--color-evolve);    color: var(--color-base); }
+
+/* ---------- Componentes ---------- */
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: var(--space-4) var(--space-8);
+  font-family: var(--font-body);
+  font-weight: var(--weight-semibold);
+  border-radius: 0;
+  border: 2px solid transparent;
+  transition: background var(--motion-fast) var(--motion-ease),
+              color var(--motion-fast) var(--motion-ease);
+}
+.boton--principal {
+  background: var(--color-action);
+  color: var(--color-base);       /* nunca blanco: 1,9:1 */
+  border-color: var(--color-action);
+}
+.boton--principal:hover { background: var(--color-base); color: var(--color-action); }
+.boton--secundario {
+  background: transparent;
+  color: var(--color-text);
+  border-color: var(--color-text);
+}
+.boton--secundario:hover { background: var(--color-elevated); }
+
+.tarjeta {
+  background: var(--bg-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: 0;
+  padding: var(--space-8);
+  /* sin sombra: la profundidad es contraste de superficie */
+}
+.tarjeta:hover { background: var(--bg-elevated); }
+/* Sobre #242424 el rosa cae a 4,05 y el azul a 4,46: el texto de acento sube a --color-text */
+.tarjeta:hover .dato-acento { color: var(--color-text); }
+
+.nav {
+  background: var(--color-base);
+  border-bottom: var(--border-width-zone) solid var(--color-text);
+  /* sin desenfoque, sin transparencia */
+}
+.nav a { font-weight: var(--weight-semibold); text-decoration: none; }
+.nav a[aria-current="page"] { box-shadow: inset 0 -3px 0 0 var(--color-action); }
+
+/* Foco visible siempre. Nunca outline: none. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-action);
+  outline-offset: 2px;
+}
+
+/* ---------- Móvil: la escala baja, la actitud no ---------- */
+@media (max-width: 768px) {
+  .bloque-sangre, .verbo { padding-inline: var(--margin-mobile); }
+  .pagina-asimetrica { padding: var(--space-6) var(--margin-mobile); }
+  /* En 4 columnas no cabe la columna de etiquetas: pasan encima del titular */
+  .columna-etiquetas { position: static; width: auto; padding-left: 0; }
+}
+
+/* ---------- Aparición ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .aparece {
+    animation: aparece var(--motion-base) var(--motion-ease) both;
+  }
+  @keyframes aparece {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: none; }
+  }
+  /* Animación firma: los cinco puntos en secuencia, 60 ms de desfase */
+  .punto { animation: aparece var(--motion-base) var(--motion-ease) both; }
+  .punto:nth-child(1) { animation-delay: 0ms; }
+  .punto:nth-child(2) { animation-delay: 60ms; }
+  .punto:nth-child(3) { animation-delay: 120ms; }
+  .punto:nth-child(4) { animation-delay: 180ms; }
+  .punto:nth-child(5) { animation-delay: 240ms; }
+}

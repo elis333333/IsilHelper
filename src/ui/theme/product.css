@@ -1,0 +1,30 @@
+/* =========================================================
+   IsilHelper — capa de producto
+   Lo único que declara este archivo es la identidad del producto.
+   Ningún color, espaciado ni duración se inventa aquí: todos los
+   valores salen de tokens.css.
+   ========================================================= */
+
+:root {
+  /* Color de acción: verde de Suki. IsilHelper es producto de Suki, no de
+     Suki Labs, así que no lleva el azul de Labs (#3A86FF).
+     Se fija aquí de forma explícita en vez de heredar el valor por defecto
+     de ui.css, para que la decisión sea visible y no un accidente.
+
+     Verificado con suki-brand-tokens/assets/contraste.py:
+       #06D6A0 sobre #0D0D0D → 10,30:1  AAA
+       #06D6A0 sobre #1A1A1A →  9,23:1  AAA   (tarjeta)
+       #06D6A0 sobre #242424 →  8,23:1  AAA   (hover)
+       #0D0D0D sobre #06D6A0 → 10,30:1  AAA   (texto del botón)
+       #FFFFFF sobre #06D6A0 →  1,89:1  FALLA — por eso el texto es oscuro */
+  --acento:       var(--color-action);
+  --sobre-acento: var(--color-base);
+}
+
+/* Montserrat no entra: es la tipografía de la marca madre y un producto propio
+   no la hereda. Inter para todo, JetBrains Mono para el dato técnico. */
+.dato-tecnico {
+  font-family: var(--font-mono);
+  font-size: var(--text-mono);
+  line-height: var(--leading-caption);
+}

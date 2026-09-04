@@ -1,0 +1,150 @@
+/* =========================================================
+   TOKENS DEL CLIENTE — plantilla
+   Proyecto: {{CLIENTE}}
+   Fecha:    {{AAAA-MM-DD}}
+
+   LA PALETA DE SUKI NO SE USA EN ESTE ARCHIVO.
+   Ni #06D6A0, ni #8338EC, ni #FFBE0B, ni #FF006E, ni #3A86FF.
+   Este sistema es propiedad del cliente y se entrega documentado.
+
+   Los valores se generan con:
+       python3 derivar.py '{{COLOR_DE_MARCA}}'
+   y se pegan aquí. Los {{marcadores}} rompen a la vista a propósito.
+   ========================================================= */
+
+:root {
+  /* ---------- Color de acción del cliente ----------
+     Origen: {{DE_DÓNDE_SALE — manual de marca, logotipo, confirmado por escrito}}
+     Contraste verificado: {{RATIO}} sobre el fondo. */
+  --accion-50:  {{HEX}};
+  --accion-100: {{HEX}};
+  --accion-200: {{HEX}};
+  --accion-300: {{HEX}};
+  --accion-400: {{HEX}};
+  --accion-500: {{HEX}};   /* color de marca del cliente */
+  --accion-600: {{HEX}};
+  --accion-700: {{HEX}};
+  --accion-800: {{HEX}};
+  --accion-900: {{HEX}};
+  --accion-950: {{HEX}};
+
+  /* Paso que sí cumple AA como texto. Puede no ser el 500:
+     muchas marcas tienen amarillos y verdes claros que fallan. */
+  --accion:        var(--accion-{{PASO}});
+  --sobre-accion:  {{#000000 o #FFFFFF, el que dé mayor ratio}};
+
+  /* ---------- Neutros ---------- */
+  --neutral-50:  {{HEX}};
+  --neutral-100: {{HEX}};
+  --neutral-200: {{HEX}};
+  --neutral-300: {{HEX}};
+  --neutral-400: {{HEX}};
+  --neutral-500: {{HEX}};
+  --neutral-600: {{HEX}};
+  --neutral-700: {{HEX}};
+  --neutral-800: {{HEX}};
+  --neutral-900: {{HEX}};
+  --neutral-950: {{HEX}};
+
+  /* ---------- Roles ---------- */
+  --bg:          var(--neutral-50);
+  --bg-surface:  #FFFFFF;
+  --bg-elevated: var(--neutral-100);
+  --fg:          var(--neutral-900);
+  --fg-muted:    var(--neutral-700);
+  --fg-subtle:   var(--neutral-600);   /* debe llegar a 4,5:1 sobre --bg */
+  --fg-disabled: var(--neutral-400);   /* NO para texto que alguien deba leer */
+  --border:      var(--neutral-300);
+
+  /* ---------- Funcionales ----------
+     Juego de arranque verificado a AA. NO son los de Suki.
+     Se ajustan si la marca del cliente ya define estados.
+     Si el color de acción del cliente es verde, el éxito cambia de tono. */
+  --error:   #B91C1C;   /* 6,5:1 sobre blanco */
+  --exito:   #15803D;   /* 5,0:1 */
+  --aviso:   #B45309;   /* 5,0:1 */
+  --info:    #1D4ED8;   /* 6,7:1 */
+  /* El estado nunca se comunica solo con color: siempre ícono + texto. */
+
+  /* ---------- Tipografía del cliente ----------
+     La del manual del cliente. Si no tiene, una familia neutra con
+     licencia clara. Montserrat NO se usa: es tipografía de Suki. */
+  --font-body: {{FAMILIA}}, system-ui, sans-serif;
+  --font-mono: {{FAMILIA_MONO}}, ui-monospace, monospace;
+
+  --text-h1:      2.25rem;   --leading-h1:      1.22;
+  --text-h2:      1.875rem;  --leading-h2:      1.27;
+  --text-h3:      1.5rem;    --leading-h3:      1.33;
+  --text-h4:      1.25rem;   --leading-h4:      1.4;
+  --text-body:    1rem;      --leading-body:    1.55;  /* nunca bajo 1.4 */
+  --text-body-sm: 0.875rem;
+  --text-caption: 0.75rem;
+  --measure: 65ch;
+
+  /* ---------- Espaciado · escala de 8, sin intermedios ---------- */
+  --space-1: 4px;   --space-2: 8px;   --space-3: 12px;  --space-4: 16px;
+  --space-6: 24px;  --space-8: 32px;  --space-12: 48px; --space-16: 64px;
+
+  /* ---------- Densidad cómoda ---------- */
+  --control-alto:            40px;
+  --control-alto-principal:  48px;
+  --fila-alto:               48px;
+  --panel-padding:           var(--space-6);
+  --campo-separacion:        var(--space-6);
+  --grupo-separacion:        var(--space-8);
+
+  /* ---------- Forma ----------
+     Un solo valor en todo el sistema, coherente con la marca del cliente.
+     El radio 0 es firma de Suki: aquí es una opción, no la norma. */
+  --radius:       {{0 · 2px · 4px · 6px — un solo valor}};
+  --border-width: 1px;
+
+  /* ---------- Elevación ----------
+     Sin sombras: la profundidad es contraste de superficie + borde. */
+
+  /* ---------- Movimiento ---------- */
+  --motion-fast: 150ms;
+  --motion-base: 250ms;
+  --motion-ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Modo oscuro, solo si el proyecto lo necesita.
+   Se implementa completo desde el principio o no se implementa. */
+[data-theme="dark"] {
+  --bg:          var(--neutral-950);
+  --bg-surface:  var(--neutral-900);
+  --bg-elevated: var(--neutral-800);
+  --fg:          var(--neutral-100);
+  --fg-muted:    var(--neutral-300);
+  --fg-subtle:   var(--neutral-400);
+  --border:      var(--neutral-700);
+  --accion:      var(--accion-{{PASO_OSCURO}});
+  --error: #F87171;  --exito: #4ADE80;  --aviso: #FBBF24;  --info: #60A5FA;
+}
+
+*, *::before, *::after { box-sizing: border-box; border-radius: var(--radius); }
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  text-align: left;
+}
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--accion);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------- Firma ----------
+   Se acuerda con el cliente antes de entregar. Si no la quiere, no va. */
+.firma-suki { font-size: var(--text-caption); color: var(--fg-subtle); }
