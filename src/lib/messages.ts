@@ -28,6 +28,13 @@ export type Loaded<T> =
   | { state: "ok"; value: T }
   | { state: "failed"; reason: FailureReason };
 
+/** La lista de pendientes con la marca de si vino entera. Una lista
+ *  truncada sin avisar es peor que un error: parece que hay menos trabajo. */
+export type PendingList = {
+  items: PendingItem[];
+  complete: boolean;
+};
+
 export type SessionSnapshot =
   | { state: "disconnected" }
   | { state: "connected"; fullname: string; sitename: string; courses: CourseSummary[] }
@@ -84,7 +91,7 @@ export type ResponseMap = {
   session: SessionSnapshot;
   connect: SessionSnapshot;
   disconnect: SessionSnapshot;
-  pending: Loaded<PendingItem[]>;
+  pending: Loaded<PendingList>;
   courses: Loaded<CourseSummary[]>;
   contents: Loaded<CourseDetail>;
   grades: Loaded<GradesReport>;

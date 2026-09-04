@@ -28,7 +28,7 @@ export default function Pending() {
     );
   }
 
-  const items = pending.data.value;
+  const { items, complete } = pending.data.value;
   const now = new Date();
 
   // Vacío y fallo son cosas distintas y se dicen distinto. Una lista vacía a
@@ -52,6 +52,18 @@ export default function Pending() {
   return (
     <>
       <PendingSummary items={items} />
+
+      {/* Una lista truncada sin avisar parece menos trabajo del que hay. */}
+      {!complete && (
+        <p className="estado estado--advertencia" style={{ marginBottom: "var(--space-6)" }}>
+          <span aria-hidden="true">▲</span>
+          <span>
+            Esta lista puede estar incompleta: la plataforma cortó la respuesta
+            antes de darme todo. Vuelve a cargarla en un momento.
+          </span>
+        </p>
+      )}
+
       <ul className="lista">
         {items.map((item) => (
           <PendingRow key={item.id} item={item} now={now} />

@@ -11,13 +11,17 @@
 
 ## Fase actual
 
-**Fase 1a.** Las cuatro pantallas escritas y verificadas con datos de prueba.
-Falta pasarlas por la cuenta real.
+**Fase 1a.** Commiteada en la rama `fase-1a-dashboard`, con la paginación de
+eventos corregida y barrera de error en la raíz.
 
 ## Siguiente paso
 
-**Probar la 1a contra la cuenta real** y contrastar cuatro cosas que no se
-pudieron verificar sin sesión:
+**Cerrar las cuatro dudas de la API contra la cuenta real** y endurecer
+`types.ts` con lo aprendido. El andamio para hacerlo vive en la rama
+`diagnostico-temporal`, aparte a propósito: se borra entera al terminar y no
+deja rastro en la historia del repo público.
+
+Las cuatro dudas:
 
 1. **Qué campos trae de verdad `core_calendar_get_action_events_by_timesort`.**
    Los tipos declaran obligatorios solo `id`, `name` y `timesort`; el resto es
@@ -32,8 +36,8 @@ pudieron verificar sin sesión:
 4. **Si el filtro de ruido deja pasar algo nuevo.** El patrón es el de
    `domain.md` §5.
 
-Después, la Fase 1b: entregas con retroalimentación, perfil y carnet, buscador
-global.
+Después: endurecer `types.ts`, borrar `diagnostico-temporal` y la Fase 1b
+(entregas con retroalimentación, perfil y carnet, buscador global).
 
 ---
 
@@ -190,6 +194,11 @@ detalle completo está en `domain.md` §2.
 **2026-09-04** — Ingeniería inversa completada. Scripts de Python funcionando y
 material del ciclo 2026-2 archivado. Decidida la arquitectura de extensión.
 Redactada la especificación. Creados los archivos de contexto.
+
+**2026-09-04** — Fase 1a commiteada en `fase-1a-dashboard`. Corregido el fallo
+de paginación del calendario que avisó Elis: faltaba seguir `aftereventid`, y
+sin eso la lista salía corta sin avisar. Añadida barrera de error tras
+comprobar que una respuesta con forma inesperada dejaba la página en blanco.
 
 **2026-09-04** — Fase 0 cerrada y verificada con sesión real. Primer commit
 (`c499d9a`), 87 archivos, sin secretos. Fase 1a escrita: pendientes en lista

@@ -4,17 +4,17 @@
  * todas las llamadas salen del mismo contexto.
  */
 
-import { getActionEvents } from "../api/calendar";
+import { getActionEventsPaged } from "../api/calendar";
 import { getCourseContents } from "../api/contents";
 import { getGradeItems } from "../api/grades";
 import { getUserCourses } from "../api/site";
 import { courseGrade, overallAverage } from "../api/average";
 import { toPendingItems } from "../api/pending";
-import type { PendingItem } from "../api/pending";
 import type { ApiError } from "../api/errors";
 import { readUserId } from "../lib/storage";
 import type {
   CourseDetail,
+  PendingList,
   CourseGradeRow,
   CourseSummary,
   FailureReason,
@@ -44,10 +44,16 @@ const failed = <T>(error: ApiError): Loaded<T> => ({
   reason: apiFailure(error),
 });
 
-export async function loadPending(): Promise<Loaded<PendingItem[]>> {
-  const events = await getActionEvents();
-  if (!events.ok) return failed(events.error);
-  return { state: "ok", value: toPendingItems(events.value, new Date()) };
+export async function loadPending(): Promise<Loaded<PendingList>> {
+  const paged = await getActionEventsPaged();
+  if (!paged.ok) return failed(paged.error);
+  return {
+    state: "ok",
+    value: {
+      items: toPendingItems(paged.value.events, new Date()),
+      complete: paged.value.complete,
+    },
+  };
 }
 
 export async function loadCourses(): Promise<Loaded<CourseSummary[]>> {
