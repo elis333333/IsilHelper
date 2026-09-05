@@ -2,14 +2,40 @@
  *  a las causas que la interfaz sabe explicar. */
 
 import { getSiteInfo, getUserCourses } from "../api/site";
+import { getUserProfile } from "../api/profile";
 import type { AuthError } from "./auth";
 import { requestToken } from "./auth";
 import { apiFailure } from "./data";
-import { clearToken, hasToken, writeUserId } from "../lib/storage";
+import {
+  clearToken,
+  hasToken,
+  readProfile,
+  writeProfile,
+  writeUserId,
+  type StoredProfile,
+} from "../lib/storage";
 import type { FailureReason, SessionSnapshot } from "../lib/messages";
 
 function authFailure(error: AuthError): FailureReason {
   return error.kind === "nosession" ? "nosession" : "unexpected";
+}
+
+/** El perfil se pide una sola vez en la vida de la sesión y se guarda. Si
+ *  falla, la sesión sigue adelante: la cabecera enseña lo que tenga, porque
+ *  quedarse sin correo no es motivo para dejar al estudiante sin cursos. */
+async function loadProfile(userid: number): Promise<StoredProfile | null> {
+  const stored = await readProfile();
+  if (stored !== null) return stored;
+
+  const fetched = await getUserProfile(userid);
+  if (!fetched.ok || fetched.value === null) return null;
+
+  const profile: StoredProfile = {
+    email: fetched.value.email ?? null,
+    department: fetched.value.department ?? null,
+  };
+  await writeProfile(profile);
+  return profile;
 }
 
 export async function readSession(): Promise<SessionSnapshot> {
@@ -24,10 +50,14 @@ export async function readSession(): Promise<SessionSnapshot> {
   const courses = await getUserCourses(info.value.userid);
   if (!courses.ok) return { state: "failed", reason: apiFailure(courses.error) };
 
+  const profile = await loadProfile(info.value.userid);
+
   return {
     state: "connected",
     fullname: info.value.fullname,
     sitename: info.value.sitename,
+    email: profile?.email ?? null,
+    department: profile?.department ?? null,
     courses: courses.value.map((course) => ({
       id: course.id,
       fullname: course.fullname,

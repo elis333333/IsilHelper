@@ -129,11 +129,28 @@ primero; la 1b espera a que la 1a esté sólida.
 4. **Notas.** `gradereport_user_get_grade_items`, todos los cursos en una tabla,
    con promedio.
 
-*Fase 1b — lo que suma encima.*
+*Fase 1b — lo que suma encima.* Reordenada el 5 de septiembre de 2026 con los
+datos del primer diagnóstico contra la cuenta real: primero lo que no depende
+de datos que todavía no existen.
 
-5. Entregas con retroalimentación
-6. Perfil y carnet
-7. Buscador global
+5. **Buscador global** sobre lo que ya está en caché. La única de las tres que
+   no espera a nada.
+6. **Entregas con retroalimentación.** En espera. El libro de calificaciones
+   está vacío en los 11 cursos y no se sabe si es que el ciclo acaba de empezar
+   o si ISIL no lo usa (`domain.md` §9). Sin fuente no hay pantalla, y
+   fabricarla con datos inventados sería peor que no tenerla.
+**El perfil se cayó de la lista**, así que la 1b son dos piezas y no tres.
+`core_user_get_users_by_field` no devuelve código de alumno, ni carrera, ni
+ciclo: el carnet digital que preveía la especificación no se puede construir
+sin inventarse la mitad. Lo poco que aporta —correo institucional y
+`department`— está desde el 5 de septiembre de 2026 en la cabecera de la
+aplicación, que es donde cabía.
+
+> **El orden de ejecución de las fases 2 y 3 está invertido** desde el 5 de
+> septiembre de 2026: primero Drive, después Moodle. Los contenidos T01–T15 y
+> los sílabos son lo que motivó el proyecto y viven en Drive; los
+> complementarios de Moodle son 55 archivos que ya están archivados. Los
+> números de fase se quedan como están para no romper las referencias.
 
 **Fase 2 — Descargas de Moodle.** Individual y masiva de `pluginfile.php`;
 estructura `Curso / Sección / Tema /`; cola con progreso, pausa y reanudación;
@@ -166,6 +183,7 @@ Explícitamente **no** se hará:
 | ISIL desactiva el servicio móvil | Alto | Mensaje claro; el README no promete permanencia. Considerar avisar a sistemas antes de publicar |
 | El WAF endurece reglas | Medio | Cabeceras reales y pausas ya implementadas |
 | Cambios en la API de Moodle | Bajo | Los web services son estables entre versiones |
+| Las notas no viven en Moodle sino en un SIS | Medio | Detectado el 5 de septiembre de 2026: boletín vacío en los 11 cursos. Si se confirma, la pantalla de notas y la de retroalimentación se quedan sin fuente y la Fase 1b se replantea. La pantalla ya lo dice con honestidad en vez de mostrar una tabla vacía |
 | Fricción de marca | Bajo | Sin logos ni nombre de ISIL en la tienda; "proyecto estudiantil no oficial" |
 
 ---

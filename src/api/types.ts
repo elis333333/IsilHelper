@@ -122,6 +122,25 @@ export type CourseSection = {
 };
 
 // --------------------------------------------------------------------------
+// Perfil · core_user_get_users_by_field
+// --------------------------------------------------------------------------
+
+/**
+ * Lo que devuelve el perfil, medido el 5 de septiembre de 2026 contra la
+ * cuenta real: identidad y correo, y nada de matrícula. **No hay código de
+ * alumno, ni carrera, ni ciclo** (`domain.md` §4), así que no hay carnet que
+ * construir. Todo opcional menos `id`: que el instituto deje un campo vacío es
+ * un caso normal, no un error.
+ */
+export type UserProfile = {
+  id: number;
+  fullname?: string;
+  email?: string;
+  department?: string;
+  profileimageurl?: string;
+};
+
+// --------------------------------------------------------------------------
 // Notas · gradereport_user_get_grade_items
 // --------------------------------------------------------------------------
 

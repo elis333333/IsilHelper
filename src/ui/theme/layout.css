@@ -204,3 +204,40 @@
 .modulo__estado { font-family: var(--font-mono); font-size: var(--text-body-sm); white-space: nowrap; }
 .modulo__nombre { flex: 1 1 auto; min-width: 0; }
 .modulo__meta { color: var(--color-text-subtle); font-size: var(--text-body-sm); white-space: nowrap; }
+
+/* ---------- Resultados del buscador ----------
+   El nombre manda: es lo que se escribió para encontrarlo. El curso y la
+   sección son contexto, así que van debajo, más pequeños y apagados, y se
+   cortan con puntos suspensivos antes que robarle sitio al nombre. */
+.resultado {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.resultado__tipo {
+  flex: 0 0 auto;
+  min-width: 5.5rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-mono-label);
+  color: var(--color-text-subtle);
+  white-space: nowrap;
+}
+.resultado__cuerpo { flex: 1 1 auto; min-width: 0; }
+.resultado__nombre {
+  display: block;
+  color: var(--color-heading);
+  font-weight: var(--weight-medium);
+}
+.resultado__contexto {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

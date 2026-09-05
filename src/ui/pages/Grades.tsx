@@ -40,6 +40,25 @@ export default function Grades() {
     );
   }
 
+  // El boletín entero vacío no es una tabla llena de guiones: es una pregunta
+  // abierta. El 5 de septiembre de 2026 los 11 cursos respondieron sin errores
+  // y sin una sola nota puesta, y todavía no se sabe si es que el ciclo acaba
+  // de empezar o si ISIL no usa el libro de calificaciones de Moodle.
+  const nothingGraded = report.rows.every((row) => !row.failed && row.graded === 0);
+
+  if (nothingGraded) {
+    return (
+      <Notice
+        symbol="·"
+        title="Todavía no hay ninguna nota puesta"
+        detail={`Tus ${report.rows.length} cursos respondieron sin errores y en ninguno hay calificaciones. No es un fallo de la extensión ni de tu cuenta.`}
+        hint="Puede ser que el ciclo acabe de empezar, o que ISIL no use el libro
+              de calificaciones de Moodle y tus notas vivan en otro sistema. No lo
+              sé todavía, y prefiero decírtelo a enseñarte una tabla vacía."
+      />
+    );
+  }
+
   const average = percentage(report.average);
 
   return (

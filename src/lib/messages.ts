@@ -37,7 +37,16 @@ export type PendingList = {
 
 export type SessionSnapshot =
   | { state: "disconnected" }
-  | { state: "connected"; fullname: string; sitename: string; courses: CourseSummary[] }
+  | {
+      state: "connected";
+      fullname: string;
+      sitename: string;
+      /** Lo único que el perfil aporta y no se sabe de memoria. `null` cuando
+       *  la plataforma no lo devuelve, que es un caso normal. */
+      email: string | null;
+      department: string | null;
+      courses: CourseSummary[];
+    }
   | { state: "failed"; reason: FailureReason };
 
 export type ModuleView = {

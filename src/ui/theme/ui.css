@@ -43,6 +43,9 @@
   height: var(--control-alto); padding-inline: var(--space-6);
   font-family: var(--font-body); font-weight: var(--weight-semibold);
   border: 1px solid transparent; border-radius: 0;
+  /* El preflight no toca el cursor y el del navegador para `button` es la
+     flecha. Un botón que no se siente pulsable es un botón peor. */
+  cursor: pointer; text-decoration: none;
   transition: background var(--motion-fast) var(--motion-ease),
               color var(--motion-fast) var(--motion-ease);
 }
@@ -67,7 +70,10 @@
   border: 1px solid var(--color-border); border-radius: 0;
 }
 .campo__control::placeholder { color: var(--color-disabled); }
-.campo__control:focus { border-color: var(--acento); outline: 1px solid var(--acento); }
+/* Solo el borde: el anillo de foco de 2 px lo pone la regla global de más
+   abajo. Con `outline` aquí, esta regla ganaba por especificidad y dejaba el
+   foco de teclado en 1 px, la mitad de lo que pide el sistema. */
+.campo__control:focus { border-color: var(--acento); }
 .campo__control[aria-invalid="true"] { border-color: var(--color-error); }
 .campo__error {
   display: flex; align-items: center; gap: var(--space-2);
@@ -95,6 +101,7 @@
   color: var(--color-text-muted); text-decoration: none;
 }
 .nav-item:hover { background: var(--color-elevated); }
+.nav-item { cursor: pointer; }
 /* El activo cambia color de texto Y barra: la barra sola sería color como único portador */
 .nav-item[aria-current="page"] {
   color: var(--color-heading);
@@ -127,4 +134,27 @@
   font-family: var(--font-body); font-weight: var(--weight-regular);
   font-size: var(--text-caption); line-height: var(--leading-caption);
   color: var(--color-text-subtle);
+}
+
+/* ---------- Enlaces ----------
+   El preflight de Tailwind los deja en `color: inherit` y sin subrayado, así
+   que sin esta regla un enlace es indistinguible del texto que lo rodea. Van
+   con color de acción **y** subrayado: el color solo no informa a quien no lo
+   distingue. Los anclas con aspecto de botón se quitan el subrayado en `.btn`. */
+:root { --color-enlace: var(--acento); }
+
+/* En claro el verde de acción no vale como texto: #06D6A0 sobre #F5F5F5 da
+   1,9:1. Ahí el enlace se distingue por el subrayado y el color de titular. */
+[data-theme="light"] { --color-enlace: var(--fg-heading); }
+
+a { color: var(--color-enlace); text-decoration: underline; }
+
+/* ---------- Enlace de acción ----------
+   Botón que navega dentro de la aplicación, así que se lee como enlace y no
+   como control. El subrayado va siempre: el color de acción por sí solo no
+   informa a quien no lo distingue. */
+.enlace {
+  background: none; border: 0; padding: 0;
+  font: inherit; text-align: left; cursor: pointer;
+  color: var(--color-enlace); text-decoration: underline;
 }

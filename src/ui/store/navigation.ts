@@ -8,6 +8,7 @@ export type View =
   | { name: "pending" }
   | { name: "courses" }
   | { name: "grades" }
+  | { name: "search" }
   | { name: "course"; courseId: number; courseName: string };
 
 type NavigationState = {

@@ -227,6 +227,40 @@ endpoint solo acepta funciones marcadas como AJAX. Va por
 **Los `mod_url` traen la URL externa ya resuelta** en `contents[0].fileurl`. No
 hace falta seguir redirecciones ni leer cabeceras `Location`.
 
+**`core_user_get_users_by_field` no da para un carnet.** Medido el 5 de
+septiembre de 2026, devuelve exactamente esto:
+
+| Campo | Qué trae |
+|---|---|
+| `id` | Id de Moodle |
+| `username` | `cXXXXXXX@carbon.super` |
+| `fullname` | Nombre completo |
+| `email` | Correo institucional |
+| `department` | Unidad, no la carrera |
+| `profileimageurl` | Avatar |
+| `customfields[]` | Uno solo: `secondmail` |
+
+**No hay código de alumno propio, ni carrera, ni ciclo, ni malla.** Lo más
+parecido a un código es el prefijo `cXXXXXXX` del `username`, que es el usuario
+de inicio de sesión, no un dato de matrícula. Un carnet digital con esto no se
+puede construir sin inventarse la mitad.
+
+**Moodle ya excluye de los eventos accionables lo que está entregado.**
+Comprobado el 5 de septiembre de 2026 entregando una tarea de verdad: al
+recargar, había desaparecido de
+`core_calendar_get_action_events_by_timesort`. **No hace falta filtrar por
+`action.actionable`** ni consultar el estado de cada entrega para saber qué
+queda pendiente; la lista que devuelve la API ya es la lista de lo que falta.
+
+**`mod_zoom` publica una función de solo lectura.** El plugin declara
+`mod_zoom_get_state` —estado de la sala, hora de inicio, duración— para el
+servicio móvil oficial, que es el que usa el token. También declara
+`mod_zoom_grade_item_update`, que **escribe** y por tanto queda fuera por la
+regla 3 del proyecto. Ninguna de las dos devuelve grabaciones. Que
+`mod_zoom_get_state` esté publicada *en esta plataforma* no se deduce leyendo
+el plugin: se mira en la lista de funciones de `site_info`, y eso lo comprueba
+el modo diagnóstico.
+
 **Los errores llegan como JSON con estado 200:**
 
 ```json
@@ -246,20 +280,51 @@ Cuatro secciones visibles como *tiles*:
 | **Contenidos** | T01–T15 + sílabo, como `mod_url` a Google Drive | ✗ (Drive) |
 | **Complementario** | PDFs, PPTX, DOCX, XLSX, SQL subidos a Moodle | ✔ |
 | **Evaluaciones** | Tareas (`mod_assign`) | ✔ los adjuntos |
-| **Clases grabadas** | Enlaces a Zoom | ✗ |
+| **Clases grabadas** | Salas y grabaciones (`mod_zoom`) | ✗ |
 
 **El material principal vive en Drive, no en Moodle.** Es el hallazgo más
 importante: de 202 enlaces externos inventariados, 176 eran de Drive.
 
+### Tipos de módulo observados
+
+Medidos el 5 de septiembre de 2026 sobre los 11 cursos del ciclo 2026-2:
+
+| `modname` | Qué es | Material |
+|---|---|---|
+| `url` | Enlace externo, casi siempre a Drive | ✔ |
+| `resource` | Archivo subido a Moodle | ✔ |
+| `assign` | Tarea | ✔ |
+| `folder` | Carpeta de archivos de Moodle | ✔ |
+| `zoom` | Sala de `mod_zoom`, con sus grabaciones | ✔ (no descargable) |
+| `label` | Maquetación de la sección | ✗ |
+
+`folder` y `zoom` aparecieron en este diagnóstico y antes no se conocían. **Las
+clases grabadas no son `mod_url`**, como se creyó hasta entonces: son módulos
+de `mod_zoom`, con salas y grabaciones propias. Sigue sin haber forma de
+descargarlas, así que Zoom continúa fuera de alcance (§8).
+
 ### Ruido a filtrar
 
-Aparecen como módulos pero no son material:
+El ruido se descarta **por estructura, no por nombre**. El filtro anterior
+adivinaba por título y se le colaba todo lo que el profesor hubiera escrito de
+otra forma.
 
-- `Ayúdanos a mejorar: tu experiencia cuenta` → jotform
-- `Tus calificaciones` → enlace interno al boletín
-- `Encuesta: Hagamos que este curso funcione para ti` → jotform
+1. **`modname === "label"`.** Las etiquetas no son material: son los bloques
+   con los que Moodle maqueta la sección. Entre **7 y 22 por curso**, medidas
+   el 5 de septiembre de 2026, y con nombres que no siguen ningún patrón:
+   `Etiqueta`, `Área de texto y medios`, `\n\n \n\n`,
+   `! ESQUEMA DE EVALUACIÓN DEL CURSO`.
+2. **Las dos encuestas de jotform**, que sí son módulos `url` de verdad e
+   indistinguibles de material por su estructura. Solo ahí se mira el nombre:
+   `/ayúdanos a mejorar|ayudanos a mejorar|encuesta/i`.
 
-Regex usado: `/ayúdanos a mejorar|ayudanos a mejorar|tus calificaciones|encuesta/i`
+**`Tus calificaciones` ya no se filtra.** Salió de la expresión regular al
+reducirla a las encuestas, así que vuelve a aparecer en el detalle del curso.
+Es un `mod_url` que apunta a la propia plataforma —los 11 enlaces internos de
+§7, uno por curso—, y la regla estructural que lo quitaría sería «`url` cuyo
+destino es `platform.ecala.net`». Está sin escribir a propósito: hace falta
+confirmar antes, con el diagnóstico, que esos módulos traen el destino en
+`contents[0].fileurl`.
 
 ---
 
@@ -311,7 +376,15 @@ alcance** para la extensión; queda como script aparte si algún día importa.
 
 ## 9. Lo que no se sabe todavía
 
-- Si las notas oficiales del récord académico están en Moodle o en un SIS aparte
+- **Si las notas están en Moodle o en un SIS aparte.** El 5 de septiembre de
+  2026 el libro de calificaciones estaba **vacío en los 11 cursos**: ningún
+  ítem con `itemtype: "course"`, ningún `graderaw`. El ciclo había empezado el
+  2 de septiembre, así que puede ser sencillamente pronto; o puede ser que ISIL
+  no use el libro de Moodle. Se resuelve solo con el tiempo: si a finales de
+  septiembre sigue vacío con evaluaciones ya rendidas, la respuesta es la
+  segunda. **De esto depende la retroalimentación de la Fase 1b**, que sin
+  libro de calificaciones se queda sin fuente
+- Si `mod_zoom_get_state` está publicada en esta plataforma (el plugin la
+  declara; lo comprueba el modo diagnóstico contra la lista de `site_info`)
 - Si el horario está disponible vía API
-- Si el carnet digital es más que la foto de perfil de `core_user_get_users_by_field`
 - Si WSO2 expone tokens OIDC reutilizables entre plataformas

@@ -4,6 +4,7 @@ const TABS: Array<{ name: View["name"]; label: string }> = [
   { name: "pending", label: "Pendientes" },
   { name: "courses", label: "Cursos" },
   { name: "grades", label: "Notas" },
+  { name: "search", label: "Buscar" },
 ];
 
 export function Nav() {

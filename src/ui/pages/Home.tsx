@@ -11,6 +11,7 @@ import Pending from "./Pending";
 import Courses from "./Courses";
 import CourseDetail from "./CourseDetail";
 import Grades from "./Grades";
+import Search from "./Search";
 
 /** Armazón de la aplicación: primero la sesión, y solo con sesión válida se
  *  monta la navegación y la vista actual. */
@@ -80,12 +81,15 @@ export default function Home() {
     <>
       <SessionHeader
         fullname={session.data.fullname}
+        email={session.data.email}
+        department={session.data.department}
         onDisconnect={() => act.mutate("disconnect")}
       />
       <Nav />
       {view.name === "pending" && <Pending />}
       {view.name === "courses" && <Courses />}
       {view.name === "grades" && <Grades />}
+      {view.name === "search" && <Search />}
       {view.name === "course" && (
         <CourseDetail courseId={view.courseId} courseName={view.courseName} />
       )}
