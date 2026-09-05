@@ -66,7 +66,15 @@ Tipos de módulo nuevos: `folder` y `zoom`. Las clases grabadas **no** son
 
 ## Siguiente paso
 
-**Revisar el plan del OAuth de la Fase 3** antes de escribir nada de Drive.
+**Revisar el plan del OAuth de la Fase 3**, que está escrito en
+`context/fase-3.md` con los dos spikes ya medidos. Nada de código de Drive
+hasta que la decisión de producto esté tomada.
+
+Lo que el plan propone, en corto: **abrir contenidos en pestañas** para todos
+—sin OAuth, sin `client_id` y sin ningún permiso nuevo—, y **descargar** detrás
+del `client_id` propio de cada estudiante, asumiendo que esa configuración deja
+fuera a la mayoría. Antes de comprometerse con ese muro conviene medir si
+`chrome.downloads` puede bajar de Drive con la sesión del navegador.
 
 Y en paralelo, **repetir el diagnóstico a partir del 6 de octubre de 2026**
 —desde la rama `diagnostico-temporal`—, con un mes de ciclo encima. Solo
