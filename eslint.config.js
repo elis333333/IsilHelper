@@ -10,6 +10,11 @@ export default tseslint.config(
       ".venv",
       "downloads",
       ".claude",
+      // Sondas de medición: se pegan a mano en la consola del service worker,
+      // no se compilan y no entran en `dist/`. Ahí `console` es la salida y
+      // los globales del navegador no están declarados, así que las reglas del
+      // producto no aplican.
+      "scripts",
     ],
   },
   js.configs.recommended,
