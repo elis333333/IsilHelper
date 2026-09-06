@@ -47,7 +47,8 @@ import {
   type QueueEntry,
   type QueueState,
 } from "../lib/storage";
-import { PAUSE_MS } from "../lib/constants";
+import { PAUSE_MS, TIMEOUT_MS } from "../lib/constants";
+import { confirmationUrl } from "../api/drive-confirm";
 import type { FileSource, QueuedFile, QueueSnapshot } from "../lib/messages";
 
 /** Reintentos por archivo ante un fallo del servidor. El WAF se quita solo si
@@ -139,8 +140,34 @@ function worthRetrying(reason: string | undefined): boolean {
  *  tocar la cola para no hacer red ni disco dentro del turno serializado. */
 type Outcome =
   | { kind: "done"; received: number }
-  | { kind: "retry" }
+  /** `url` viene cuando hay que reintentar contra otra dirección, que es lo
+   *  que pasa al confirmar la advertencia de antivirus de Drive. */
+  | { kind: "retry"; url?: string }
   | { kind: "failed"; message: string };
+
+/**
+ * Resuelve la advertencia de antivirus de Drive.
+ *
+ * Para los archivos grandes Google no manda el binario, manda una página que
+ * pide confirmar. Se lee, se saca el formulario y se devuelve la dirección con
+ * la que repetir la descarga, que es lo que haría el navegador al pulsar el
+ * botón.
+ *
+ * `null` cuando el HTML no es esa página —una pantalla de acceso, por ejemplo—,
+ * porque reintentarla daría lo mismo una y otra vez.
+ */
+async function resolveConfirmation(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(url, {
+      credentials: "include",
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    if (!response.ok) return null;
+    return confirmationUrl(await response.text(), url);
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Un archivo que llega como HTML no es el archivo, y lo que significa depende
@@ -148,16 +175,23 @@ type Outcome =
  * cuando lo que falta es la sesión de Google es mandarlo a arreglar lo que no
  * está roto.
  */
-function explainHtml(source: FileSource): string {
-  return source === "drive"
-    ? "Google devolvió una página en vez del archivo. Puede que no tengas sesión de Google en este navegador, o que el archivo sea grande y Drive esté pidiendo confirmación."
-    : "La plataforma devolvió una página en vez del archivo. Vuelve a conectar tu cuenta.";
+function explainHtml(source: FileSource, attempts: number): string {
+  if (source !== "drive") {
+    return "La plataforma devolvió una página en vez del archivo. Vuelve a conectar tu cuenta.";
+  }
+  // Si ya se intentó confirmar y sigue sin bajar, el motivo es el tamaño y no
+  // la sesión: decir «vuelve a conectar» mandaría a arreglar lo que no está
+  // roto, y encima el archivo de al lado bajó bien con la misma sesión.
+  return attempts > 1
+    ? "Google no deja bajar este archivo sin confirmar la advertencia de tamaño, y la confirmación tampoco funcionó. Ábrelo a mano en Drive."
+    : "Google devolvió una página en vez del archivo. Suele ser la advertencia que muestra con los archivos grandes.";
 }
 
 async function judge(
   downloadId: number,
   attempts: number,
   source: FileSource,
+  url: string,
 ): Promise<Outcome | null> {
   const [download] = await chrome.downloads.search({ id: downloadId });
   if (download === undefined) return { kind: "failed", message: explain(undefined) };
@@ -169,7 +203,16 @@ async function judge(
     // guarda HTML con nombre de PDF.
     if (download.mime.startsWith("text/html")) {
       await chrome.downloads.removeFile(downloadId).catch(() => undefined);
-      return { kind: "failed", message: explainHtml(source) };
+
+      // En Drive, un HTML suele ser la advertencia de antivirus por tamaño y
+      // no una sesión caducada: el archivo siguiente baja bien un segundo
+      // después con la misma sesión. Se intenta confirmar antes de rendirse.
+      if (source === "drive" && attempts <= MAX_ATTEMPTS) {
+        const confirmed = await resolveConfirmation(url);
+        if (confirmed !== null) return { kind: "retry", url: confirmed };
+      }
+
+      return { kind: "failed", message: explainHtml(source, attempts) };
     }
     return { kind: "done", received: download.bytesReceived };
   }
@@ -191,7 +234,7 @@ async function settle(downloadId: number): Promise<boolean> {
   const item = state.items.find((candidate) => candidate.downloadId === downloadId);
   if (item === undefined || item.status !== "active") return false;
 
-  const outcome = await judge(downloadId, item.attempts, item.source);
+  const outcome = await judge(downloadId, item.attempts, item.source, item.url);
   if (outcome === null) return false;
 
   if (outcome.kind === "retry") await sleep(RETRY_BACKOFF_MS * item.attempts);
@@ -208,6 +251,9 @@ async function settle(downloadId: number): Promise<boolean> {
     } else if (outcome.kind === "retry") {
       target.status = "pending";
       target.error = null;
+      // La confirmación de Drive cambia la dirección: se guarda para que el
+      // siguiente intento salga ya confirmado.
+      if (outcome.url !== undefined) target.url = outcome.url;
     } else {
       target.status = "failed";
       target.error = outcome.message;

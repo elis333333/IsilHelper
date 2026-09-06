@@ -276,6 +276,75 @@ describe("cola de descargas", () => {
     expect(snapshot.items[0]?.error).toContain("No hay sesión conectada");
   });
 
+  it("confirma la advertencia de tamaño de Drive y reintenta con la nueva URL", async () => {
+    // Google no manda el binario de los archivos grandes: manda una página
+    // que pide confirmar. Llega con estado 200 y text/html, así que sin esto
+    // se guardaría una página con nombre de .pptx.
+    const CONFIRMACION = `<html><head><title>Google Drive - Virus scan warning</title></head>
+      <body><form id="download-form" action="https://drive.usercontent.google.com/download">
+      <input type="hidden" name="id" value="1AbC">
+      <input type="hidden" name="confirm" value="t">
+      </form></body></html>`;
+
+    vi.stubGlobal("fetch", () =>
+      Promise.resolve(new Response(CONFIRMACION, { status: 200 })),
+    );
+
+    const queue = await load();
+    await queue.enqueue([
+      {
+        ...file("IsilHelper/Curso/Contenidos/presentacion.pptx"),
+        url: "https://drive.usercontent.google.com/download?id=1AbC&export=download",
+        source: "drive",
+      },
+    ]);
+    await vi.runAllTimersAsync();
+    await finish({ mime: "text/html" });
+
+    // Vuelve a la cola con la dirección confirmada, no se marca como fallo.
+    expect(downloads).toHaveLength(2);
+    expect(downloads[1]?.url).toContain("confirm=t");
+
+    await finish({ mime: "application/vnd.ms-powerpoint" });
+    const snapshot = await queue.queueSnapshot();
+    expect(snapshot.items[0]?.status).toBe("done");
+  });
+
+  it("no confunde la pantalla de acceso de Google con una confirmación", async () => {
+    // Reintentarla daría lo mismo una y otra vez.
+    vi.stubGlobal("fetch", () =>
+      Promise.resolve(
+        new Response('<html><title>Sign in - Google Accounts</title></html>', { status: 200 }),
+      ),
+    );
+
+    const queue = await load();
+    await queue.enqueue([
+      {
+        ...file("IsilHelper/Curso/Contenidos/a.pdf"),
+        url: "https://drive.usercontent.google.com/download?id=1AbC",
+        source: "drive",
+      },
+    ]);
+    await vi.runAllTimersAsync();
+    await finish({ mime: "text/html" });
+
+    expect(downloads).toHaveLength(1);
+    expect((await queue.queueSnapshot()).items[0]?.status).toBe("failed");
+  });
+
+  it("un HTML de Moodle sigue diciendo que hay que reconectar la cuenta", async () => {
+    store.moodleToken = "<TOKEN>";
+    const queue = await load();
+
+    await queue.enqueue([file("IsilHelper/Curso/Sección/a.pdf")]);
+    await vi.runAllTimersAsync();
+    await finish({ mime: "text/html" });
+
+    const snapshot = await queue.queueSnapshot();
+    expect(snapshot.items[0]?.error).toContain("Vuelve a conectar tu cuenta");
+  });
+
   it("no encola dos veces el mismo archivo", async () => {
     store.moodleToken = "<TOKEN>";
     const queue = await load();

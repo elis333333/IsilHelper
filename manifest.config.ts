@@ -8,6 +8,8 @@ import pkg from "./package.json" with { type: "json" };
 //   Fase 0  storage, webRequest, host platform.ecala.net
 //   Fase 2  + downloads                       ← concedido: la cola ya existe
 //   Fase 3  + host drive.google.com           ← concedido: enumerar carpetas
+//           + host drive.usercontent.google.com  ← leer la confirmación de
+//             antivirus que Drive devuelve en vez de los archivos grandes
 //
 // La Fase 3 NO pide `identity` ni `googleapis.com`: no hay OAuth. Enumerar y
 // descargar funcionan con la sesión de Google del navegador (`fase-3.md` §8).
@@ -44,5 +46,9 @@ export default defineManifest({
   },
 
   permissions: ["storage", "webRequest", "downloads"],
-  host_permissions: ["https://platform.ecala.net/*", "https://drive.google.com/*"],
+  host_permissions: [
+    "https://platform.ecala.net/*",
+    "https://drive.google.com/*",
+    "https://drive.usercontent.google.com/*",
+  ],
 });
