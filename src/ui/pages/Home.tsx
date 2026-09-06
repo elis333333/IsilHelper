@@ -3,7 +3,7 @@ import { ConnectPanel } from "../components/ConnectPanel";
 import { FailureNotice } from "../components/FailureNotice";
 import { SessionHeader } from "../components/SessionHeader";
 import { Nav } from "../components/Nav";
-import { Loading } from "../components/Notice";
+import { Cargando } from "../components/Puntos";
 import { ask } from "../lib/messaging";
 import { useNavigation } from "../store/navigation";
 import type { SessionSnapshot } from "../../lib/messages";
@@ -42,14 +42,23 @@ export default function Home() {
       <div className="pantalla__centro">
         {children}
         <footer className="pie">
-          <p className="firma-labs">IsilHelper · un proyecto de Suki</p>
+          {/* La firma de respaldo es el único vínculo obligatorio con la marca
+              madre, y va aquí: la identidad de la cabecera es la del producto. */}
+          <p className="firma">
+            <img
+              className="firma__logo"
+              src={chrome.runtime.getURL("marca/suki-oscuro.png")}
+              alt="Suki"
+            />
+            <span className="firma-labs">IsilHelper · un proyecto de Suki</span>
+          </p>
         </footer>
       </div>
     </main>
   );
 
   if (session.isPending) {
-    return shell(<Loading what="Estoy comprobando si ya tienes la cuenta conectada." />);
+    return shell(<Cargando que="Estoy comprobando si ya tienes la cuenta conectada." />);
   }
 
   if (session.isError) {

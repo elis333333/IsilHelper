@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { ask } from "../lib/messaging";
 import { GradesTable } from "../components/GradesTable";
 import { FailureNotice } from "../components/FailureNotice";
-import { Loading, Notice } from "../components/Notice";
+import { Notice } from "../components/Notice";
+import { Cargando } from "../components/Puntos";
 import { percentage } from "../lib/format";
 
 export default function Grades() {
@@ -14,7 +15,7 @@ export default function Grades() {
   // Son once llamadas con pausa de 600 ms entre ellas: decir qué está pasando
   // no es cortesía, es lo que evita que parezca colgado.
   if (grades.isPending) {
-    return <Loading what="Estoy pidiendo las notas curso por curso. Tarda unos segundos." />;
+    return <Cargando que="Estoy pidiendo las notas curso por curso. Tarda unos segundos." />;
   }
 
   if (grades.isError || grades.data?.state === "failed") {

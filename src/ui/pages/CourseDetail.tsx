@@ -6,7 +6,8 @@ import { SectionBlock } from "../components/SectionBlock";
 import { DownloadAction } from "../components/DownloadAction";
 import { DrivePanel } from "../components/DrivePanel";
 import { FailureNotice } from "../components/FailureNotice";
-import { Loading, Notice } from "../components/Notice";
+import { Notice } from "../components/Notice";
+import { Cargando } from "../components/Puntos";
 import { useNavigation } from "../store/navigation";
 import type { CourseDetail as Detail } from "../../lib/messages";
 
@@ -89,7 +90,7 @@ export default function CourseDetail({ courseId, courseName }: Props) {
         {courseName}
       </h2>
 
-      {contents.isPending && <Loading what="Estoy cargando el contenido del curso." />}
+      {contents.isPending && <Cargando que="Estoy cargando el contenido del curso." />}
 
       {(contents.isError || contents.data?.state === "failed") && (
         <FailureNotice

@@ -28,8 +28,19 @@ export default defineManifest({
 
   // Sin default_popup a propósito: la interfaz vive en una pestaña, no en un
   // globo de 400 px. Sin popup, action.onClicked sí dispara.
+  icons: {
+    16: "iconos/icono-16.png",
+    32: "iconos/icono-32.png",
+    48: "iconos/icono-48.png",
+    128: "iconos/icono-128.png",
+  },
+
   action: {
     default_title: "Abrir IsilHelper",
+    default_icon: {
+      16: "iconos/icono-16.png",
+      32: "iconos/icono-32.png",
+    },
   },
 
   permissions: ["storage", "webRequest", "downloads"],

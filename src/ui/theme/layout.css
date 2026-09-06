@@ -166,6 +166,29 @@
 .u-later { border-left-color: var(--color-border); }
 .u-later .pendiente__marca { color: var(--color-text-subtle); }
 
+/* ---------- Presencia del color de marca ----------
+   El sistema es 70 % neutros, 20 % verde y 10 % el resto. La interfaz estaba
+   por debajo del 20: el verde solo salía en el botón principal. Se le da sitio
+   donde es acento y no decoración —bordes activos, cifras, marcas de zona—,
+   nunca como fondo de sección o de tarjeta, que es como se pierde. */
+
+/* Las cifras grandes ya iban en acento; ahora también las de los resúmenes. */
+.resumen__cifra { color: var(--acento); }
+/* Salvo las que llevan color funcional propio: ahí manda el estado. */
+.u-overdue .resumen__cifra { color: var(--color-error); }
+.u-today .resumen__cifra { color: var(--color-warning); }
+.u-week .resumen__cifra { color: var(--color-info); }
+
+/* Barra de zona a la izquierda del bloque, como en la navegación lateral del
+   sistema. Sobre #0D0D0D el verde da 10,30:1. */
+.seccion__cabecera {
+  border-left: var(--border-width-zone) solid var(--acento);
+  padding-left: var(--space-4);
+}
+
+/* El titular de la pantalla lleva una regla de acento debajo. */
+.cabecera { border-bottom-color: var(--acento); }
+
 /* ---------- Grilla de cursos ---------- */
 .grilla {
   display: grid;
@@ -185,12 +208,29 @@
   font-family: var(--font-body);
   transition: background var(--motion-fast) var(--motion-ease);
 }
-.curso:hover { background: var(--color-elevated); }
+.curso:hover { background: var(--color-elevated); border-color: var(--acento); }
+/* Sobre #242424 el verde da 8,23:1, así que el nombre puede ir en acento. */
+.curso:hover .curso__nombre { color: var(--acento); }
 .curso__nombre { color: var(--color-heading); font-weight: var(--weight-semibold); }
 
-/* Barra de avance. Nunca sola: siempre lleva el porcentaje en texto. */
-.barra { height: var(--space-2); background: var(--color-border-strong); }
-.barra__relleno { height: 100%; background: var(--acento); }
+/* Barra de avance. Nunca sola: siempre lleva el porcentaje en texto.
+
+   `display: block` no es decorativo: la barra es un `<span>`, y un span en
+   línea ignora `height` y no contiene a un hijo con `width` en porcentaje. Sin
+   esto el relleno no se veía y la tarjeta decía "17 % completado" con la barra
+   vacía. En la cola sí se veía porque allí había un `display: block` local. */
+.barra {
+  display: block;
+  width: 100%;
+  height: var(--space-2);
+  background: var(--color-border-strong);
+}
+.barra__relleno {
+  display: block;
+  height: 100%;
+  background: var(--acento);
+  transition: width var(--motion-base) var(--motion-ease);
+}
 
 /* ---------- Secciones del detalle de curso ---------- */
 .seccion + .seccion { margin-top: var(--space-8); }

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="268.28174mm"
+   height="129.82135mm"
+   viewBox="0 0 268.28174 129.82135"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="dibujo.svg"
+   inkscape:version="1.4.4 (dcaf3e7d9e, 2026-05-05)"
+   inkscape:export-batch-name="dibujo"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.62827973"
+     inkscape:cx="610.3969"
+     inkscape:cy="2248.2024"
+     inkscape:window-width="1194"
+     inkscape:window-height="1028"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer22" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:groupmode="layer"
+     id="layer14"
+     inkscape:label="Logo Sin Fondo"
+     transform="translate(198.96889,-530.02928)">
+    <text
+       xml:space="preserve"
+       style="font-size:129.23px;line-height:0.5;font-family:Montserrat;-inkscape-font-specification:'Montserrat, @wght=500';font-variation-settings:'wght' 500;writing-mode:lr-tb;direction:ltr;fill:#000000;fill-opacity:1;stroke-width:0.774142"
+       x="-204.26712"
+       y="627.85638"
+       id="text1-8-74"><tspan
+         sodipodi:role="line"
+         id="tspan1-8-85"
+         style="fill:#000000;fill-opacity:1;stroke-width:0.774142"
+         x="-204.26712"
+         y="627.85638">Suki</tspan></text>
+    <circle
+       style="font-variation-settings:'wght' 500;fill:#3a86ff;fill-opacity:1;stroke-width:0.615461"
+       id="path3-2-8"
+       cx="60.007298"
+       cy="651.29578"
+       r="8.3945217" />
+    <circle
+       style="font-variation-settings:'wght' 500;fill:#ff006e;fill-opacity:1;stroke-width:0.615461"
+       id="path3-5-8-2"
+       cx="31.47814"
+       cy="651.40265"
+       r="8.3945217" />
+    <circle
+       style="font-variation-settings:'wght' 500;fill:#ffbe0b;fill-opacity:1;stroke-width:0.615461"
+       id="path3-5-3-8-6"
+       cx="2.9489799"
+       cy="651.24237"
+       r="8.3945217" />
+    <circle
+       style="font-variation-settings:'wght' 500;fill:#8338ec;fill-opacity:1;stroke-width:0.615461"
+       id="path3-5-3-4-8-0"
+       cx="-25.580194"
+       cy="651.34924"
+       r="8.3945217" />
+    <circle
+       style="font-variation-settings:'wght' 500;fill:#06d6a0;fill-opacity:1;stroke-width:0.615461"
+       id="path3-5-3-3-6-6"
+       cx="-54.109356"
+       cy="651.45612"
+       r="8.3945217" />
+  </g>
+</svg>

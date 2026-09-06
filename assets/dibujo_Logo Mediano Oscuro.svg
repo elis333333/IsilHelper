@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="131mm"
+   height="82mm"
+   viewBox="0 0 131 82"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="dibujo.svg"
+   inkscape:version="1.4.4 (dcaf3e7d9e, 2026-05-05)"
+   inkscape:export-batch-name="dibujo"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.62827973"
+     inkscape:cx="610.3969"
+     inkscape:cy="2248.2024"
+     inkscape:window-width="1194"
+     inkscape:window-height="1028"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer22" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:groupmode="layer"
+     id="layer5"
+     inkscape:label="Logo Mediano Oscuro"
+     transform="translate(-7.0522385,-906.13062)">
+    <rect
+       style="font-variation-settings:'wght' 500;fill:#0d0d0d;fill-opacity:1;stroke-width:0.283918"
+       id="rect7"
+       width="131"
+       height="82"
+       x="7.0522385"
+       y="906.13062"
+       ry="12.545347" />
+    <ellipse
+       style="font-variation-settings:'wght' 500;fill:#3a86ff;fill-opacity:1;stroke-width:0.291339"
+       id="path3-2-03"
+       cx="119.3838"
+       cy="973.26263"
+       rx="4.0370312"
+       ry="3.911365" />
+    <ellipse
+       style="font-variation-settings:'wght' 500;fill:#ff006e;fill-opacity:1;stroke-width:0.291339"
+       id="path3-5-8-3"
+       cx="105.66378"
+       cy="973.31244"
+       rx="4.0370312"
+       ry="3.911365" />
+    <ellipse
+       style="font-variation-settings:'wght' 500;fill:#ffbe0b;fill-opacity:1;stroke-width:0.291339"
+       id="path3-5-3-8-3"
+       cx="91.943748"
+       cy="973.23779"
+       rx="4.0370312"
+       ry="3.911365" />
+    <ellipse
+       style="font-variation-settings:'wght' 500;fill:#8338ec;fill-opacity:1;stroke-width:0.291339"
+       id="path3-5-3-4-8-7"
+       cx="78.223717"
+       cy="973.2876"
+       rx="4.0370312"
+       ry="3.911365" />
+    <ellipse
+       style="font-variation-settings:'wght' 500;fill:#06d6a0;fill-opacity:1;stroke-width:0.291339"
+       id="path3-5-3-3-6-3"
+       cx="64.5037"
+       cy="973.3374"
+       rx="4.0370312"
+       ry="3.911365" />
+    <text
+       xml:space="preserve"
+       style="font-size:50.7592px;line-height:0.5;font-family:Montserrat;-inkscape-font-specification:'Montserrat, @wght=500';font-variation-settings:'wght' 500;writing-mode:lr-tb;direction:ltr;fill:#ffffff;fill-opacity:1;stroke-width:0.304069"
+       x="14.657187"
+       y="978.4729"
+       id="text1-8-7"
+       transform="scale(1.0159373,0.98431273)"><tspan
+         id="tspan1-8-9"
+         style="fill:#ffffff;fill-opacity:1;stroke-width:0.304069"
+         x="14.657187"
+         y="978.4729"
+         sodipodi:role="line">Suki</tspan></text>
+  </g>
+</svg>

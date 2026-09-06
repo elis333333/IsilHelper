@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { ask } from "../lib/messaging";
 import { CourseCard } from "../components/CourseCard";
 import { FailureNotice } from "../components/FailureNotice";
-import { Loading, Notice } from "../components/Notice";
+import { Notice } from "../components/Notice";
+import { Cargando } from "../components/Puntos";
 import { useNavigation } from "../store/navigation";
 
 export default function Courses() {
@@ -13,7 +14,7 @@ export default function Courses() {
     queryFn: () => ask({ type: "courses" }),
   });
 
-  if (courses.isPending) return <Loading what="Estoy cargando tus cursos." />;
+  if (courses.isPending) return <Cargando que="Estoy cargando tus cursos." />;
 
   if (courses.isError || courses.data?.state === "failed") {
     const reason = courses.data?.state === "failed" ? courses.data.reason : "unexpected";

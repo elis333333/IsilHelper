@@ -1,3 +1,5 @@
+import { Puntos } from "./Puntos";
+
 type Props = {
   fullname: string;
   email: string | null;
@@ -21,8 +23,14 @@ export function SessionHeader({ fullname, email, department, onDisconnect }: Pro
         <p className="etiqueta" style={{ color: "var(--color-text-subtle)" }}>
           Tu información académica
         </p>
-        <h1 className="titulo" style={{ margin: "var(--space-2) 0 0" }}>
-          IsilHelper
+        {/* Los cinco puntos, que son el elemento gráfico de la marca y lo
+            único que puede aparecer solo. El logotipo completo va en el pie:
+            aquí manda la identidad del producto. */}
+        <h1 className="titulo marca" style={{ margin: "var(--space-2) 0 0" }}>
+          <Puntos size={12} />
+          <span className="marca__nombre">
+            Isil<em>Helper</em>
+          </span>
         </h1>
       </div>
 

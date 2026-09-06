@@ -28,3 +28,92 @@
   font-size: var(--text-mono);
   line-height: var(--leading-caption);
 }
+
+/* =========================================================
+   Los cinco puntos de Suki
+   Orden y colores fijos: cada posición es un verbo y una familia.
+   Los valores salen de tokens.css; aquí no hay ninguno a mano.
+   ========================================================= */
+
+.puntos {
+  display: inline-flex;
+  align-items: center;
+  /* La separación entre puntos es del mismo orden que su diámetro. */
+  gap: var(--space-2);
+}
+
+/* Los puntos y la cajita del logotipo son la ÚNICA excepción al radio 0 del
+   sistema: son circulares por definición. */
+.puntos__punto {
+  display: block;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+/* Salto corto y en secuencia, con el desfase de 60 ms de la animación firma.
+   Se anima solo la posición —el color nunca es el único cambio, y aquí no
+   cambia—, con la curva única del sistema. El movimiento ocupa 400 ms del
+   ciclo, que es el máximo absoluto; el resto es reposo, para que no quede
+   como un rebote continuo. */
+@keyframes puntos-salto {
+  0%   { transform: translateY(0); }
+  15%  { transform: translateY(-40%); }
+  30%  { transform: translateY(0); }
+  100% { transform: translateY(0); }
+}
+
+.puntos--saltando .puntos__punto {
+  animation: puntos-salto 1.33s var(--motion-ease) infinite;
+}
+
+/* Con prefers-reduced-motion los cinco se quedan quietos y visibles. */
+@media (prefers-reduced-motion: reduce) {
+  .puntos--saltando .puntos__punto { animation: none; }
+}
+
+/* El indicador de carga va siempre con texto: un indicador sin texto no
+   informa de qué está pasando. */
+.cargando {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* ---------- Marca en la cabecera y en el pie ---------- */
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* Hereda el tamaño de quien lo contiene: dentro de `.titulo` es un h1, y
+   fijarle aquí un tamaño propio lo encogía a h3. Solo declara color y peso. */
+.marca__nombre {
+  font-family: var(--font-body);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-heading);
+  color: var(--color-heading);
+}
+
+/* El acento del producto en el nombre: es la marca hablando, y el verde sobre
+   la base da 10,30:1. */
+.marca__nombre em {
+  font-style: normal;
+  color: var(--acento);
+}
+
+/* Firma de respaldo. El logotipo de Suki va aquí, en el pie, y no en la
+   cabecera: la identidad de la cabecera es la del producto. */
+.firma {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+.firma__logo {
+  height: 32px;
+  width: auto;
+  display: block;
+}

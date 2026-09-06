@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="297.02609mm"
+   height="207.7141mm"
+   viewBox="0 0 297.02609 207.7141"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="dibujo.svg"
+   inkscape:version="1.4.4 (dcaf3e7d9e, 2026-05-05)"
+   inkscape:export-batch-name="dibujo"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.62827973"
+     inkscape:cx="610.3969"
+     inkscape:cy="2248.2024"
+     inkscape:window-width="1194"
+     inkscape:window-height="1028"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer22" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Logo Claro"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0.01449884,-227.28113)">
+    <rect
+       style="font-variation-settings:'wght' 500;fill:#ffffff;fill-opacity:1;stroke-width:0.262298"
+       id="rect45-8"
+       width="297.02609"
+       height="207.7141"
+       x="-0.014498845"
+       y="227.28113"
+       ry="0"
+       inkscape:label="Fondo" />
+    <text
+       xml:space="preserve"
+       style="font-size:129.23px;line-height:0.5;font-family:Montserrat;-inkscape-font-specification:'Montserrat, @wght=500';font-variation-settings:'wght' 500;writing-mode:lr-tb;direction:ltr;fill:#000000;fill-opacity:1;stroke-width:0.774142"
+       x="9.0607491"
+       y="364.80038"
+       id="text1-8"><tspan
+         sodipodi:role="line"
+         id="tspan1-8"
+         style="fill:#000000;fill-opacity:1;stroke-width:0.774142"
+         x="9.0607491"
+         y="364.80038">Suki</tspan></text>
+    <circle
+       style="font-variation-settings:'wght' 500;fill:#3a86ff;fill-opacity:1;stroke-width:0.615461"
+       id="path3-2"
+       cx="273.33517"
+       cy="388.23981"
+       r="8.3945217" />
+    <circle
+       style="font-variation-settings:'wght' 500;fill:#ff006e;fill-opacity:1;stroke-width:0.615461"
+       id="path3-5-8"
+       cx="244.80602"
+       cy="388.34668"
+       r="8.3945217" />
+    <circle
+       style="font-variation-settings:'wght' 500;fill:#ffbe0b;fill-opacity:1;stroke-width:0.615461"
+       id="path3-5-3-8"
+       cx="216.27686"
+       cy="388.18637"
+       r="8.3945217" />
+    <circle
+       style="font-variation-settings:'wght' 500;fill:#8338ec;fill-opacity:1;stroke-width:0.615461"
+       id="path3-5-3-4-8"
+       cx="187.74768"
+       cy="388.29327"
+       r="8.3945217" />
+    <circle
+       style="font-variation-settings:'wght' 500;fill:#06d6a0;fill-opacity:1;stroke-width:0.615461"
+       id="path3-5-3-3-6"
+       cx="159.21852"
+       cy="388.40015"
+       r="8.3945217" />
+  </g>
+</svg>

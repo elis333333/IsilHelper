@@ -101,21 +101,30 @@ poder darla por cerrada. Qué mirar, en orden:
 Empezar por **un curso**, no por los once: es la regla de siempre, probar con
 límite antes de correr sobre todo.
 
-**2 · Correr la Fase 3 contra la cuenta real.** Está escrita entera y en verde,
-y **sin OAuth**: enumerar y descargar funcionan con la sesión de Google del
-navegador, así que el `client_id` no existe en este proyecto y ningún
-estudiante toca la consola de Google Cloud.
+**2 · Averiguar por qué falla la enumeración de Drive.** La Fase 2 está
+**verificada contra la cuenta real** —45 archivos, tildes y estructura
+correctas—, pero la Fase 3 falla al explorar.
 
-Qué mirar, y otra vez **empezando por un solo curso**:
+Hay un **diagnóstico temporal** puesto para resolverlo por medición y no por
+deducción. Al fallar la exploración, la pantalla enseña: permiso de host
+concedido, modo de credenciales, estado HTTP, bytes recibidos, si el HTML trae
+`flip-entries`, si parece pantalla de acceso, y los primeros 200 caracteres.
 
-- Que los temas caigan en `Contenidos/<Tema>/`, con las subcarpetas de Drive
-  reproducidas debajo.
-- Que los documentos nativos —Docs, Sheets, Slides— se exporten y **abran**.
-  Son la parte con menos respaldo experimental: las rutas de exportación
-  siguen sin medirse de forma aislada (`fase-3.md` §8c).
-- Que las carpetas que no se puedan leer salgan en la lista con su motivo, en
-  vez de desaparecer. Es la condición que sostiene toda la vía.
-- Que un segundo *Descargar* diga «ya lo tienes».
+Las tres causas a descartar, y lo que diría cada una:
+
+| Señal | Causa |
+|---|---|
+| `permiso de host concedido: false` | Declarado en el manifest pero **no concedido**: al añadirlo a una extensión ya cargada hay que recargarla |
+| `credenciales` distinto de `include` | La cookie de Google no viaja. **Ya descartada por código**: el `fetch` lo lleva desde el principio |
+| `estado 200`, con bytes y sin `flip-entries` | Google le da a la extensión un HTML distinto del que le da a una pestaña |
+
+La tercera es la que más me preocupa, y es culpa de cómo se midió: **la
+validación se hizo desde una pestaña de drive.google.com, donde la petición era
+del mismo origen. Desde la extensión no lo es, y esa diferencia nunca se
+midió.** Que funcione en una pestaña no probaba que funcionara en el service
+worker.
+
+**El diagnóstico se quita en cuanto la causa esté encontrada.**
 
 **3 · Medir lo que queda de Drive** (`fase-3.md` §8c): las rutas de exportación
 de los nativos y una subcarpeta suelta. Ninguno bloquea, pero los dos son
@@ -413,15 +422,20 @@ detalle completo está en `domain.md` §2.
 - [x] ~~**Validar la enumeración con la cuenta institucional**~~ sobre
       «Compartidos conmigo». Hecho: responde igual, sin pedir login
 - [x] ~~**Guardar el HTML real como fixture**~~, anonimizado
-- [ ] **Correr la Fase 3 contra la cuenta real.** Escrita y en verde, sin bajar
-      todavía un solo archivo de Drive de verdad
+- [x] ~~**Correr la Fase 2 contra la cuenta real.**~~ Verificada: 45 archivos en
+      Base de Datos, tildes y estructura correctas
+- [ ] **La Fase 3 falla al explorar.** Diagnóstico temporal puesto; falta
+      correrlo y leer lo que dice
+- [ ] **Quitar el diagnóstico temporal de Drive** cuando la causa esté
+      encontrada
 - [ ] **Medir las rutas de exportación de los nativos** y **que una subcarpeta
       se enumere igual** (`fase-3.md` §8c). El código ya las da por buenas
 - [ ] **Capturar un fixture limpio** de `embeddedfolderview` con la sonda ya
       corregida, y guardarlo junto al corrompido
 - [ ] **Medir las subcarpetas y los documentos nativos** (`fase-3.md` §8c), que
       son los dos límites conocidos de la vía por defecto
-- [ ] Iconografía de tienda (16/32/48/128 px)
+- [x] ~~Iconografía de tienda (16/32/48/128 px)~~. Generada desde
+      `assets/dibujo_Ícono Oscuro.svg` con `rsvg-convert`, en `public/iconos/`
 - [ ] **Confirmar si las notas están en Moodle o en un SIS aparte.** Boletín
       vacío en los 11 cursos el 5 de septiembre de 2026. Se resuelve corriendo
       el diagnóstico a partir del 6 de octubre. **De esto depende la pieza de
@@ -631,3 +645,39 @@ Drive permiten ciclos, y avisa cuando para por un tope. 181 tests.
 
 Queda correrlo contra la cuenta real, que es lo único que falta, y capturar el
 fixture limpio de `embeddedfolderview` con la sonda ya corregida.
+
+**2026-09-06 · 18:30** — **Fase 2 verificada contra la cuenta real**: 45
+archivos, tildes y estructura correctas. La Fase 3 falla al explorar, y el
+mensaje que salía estaba **mal atribuido**: decía que la plataforma respondió
+mal y que suele pasar cuando el instituto cambia algo, cuando quien respondió
+mal fue Google. Es el mismo error por origen que ya se había corregido en las
+descargas y que había quedado sin corregir en la enumeración; ahora el
+resultado de explorar distingue `course-failed` —de la plataforma— de
+`drive-failed` —de Google—, y `exploreDrive` captura las excepciones, porque
+una que se escapara dejaba la petición sin respuesta y la interfaz caía en el
+aviso genérico, que era justo la atribución equivocada.
+
+Puesto un **diagnóstico temporal** para resolverlo por medición: permiso de
+host concedido —que no es lo mismo que declarado—, modo de credenciales, estado
+HTTP, bytes, si el HTML trae `flip-entries` y si parece pantalla de acceso. La
+hipótesis de las credenciales queda descartada por código: el `fetch` lleva
+`credentials: "include"` desde el principio. La que más pesa es la tercera, y
+es culpa de cómo se midió: **la validación se hizo desde una pestaña de Drive,
+donde era del mismo origen, y desde la extensión no lo es.** Esa diferencia
+nunca se midió.
+
+Cuatro cosas de interfaz. **La barra de avance salía vacía** con el porcentaje
+escrito al lado: `.barra` es un `<span>` y en línea ignora `height` y no
+contiene a un hijo con `width` en porcentaje; en la cola sí se veía porque allí
+había un `display: block` local. **El logotipo** entra por el pie, que es donde
+la skill pone la firma de respaldo, generado a PNG con `rsvg-convert` porque el
+SVG lleva el texto como `<text>` en Montserrat y dependería de la fuente; en la
+cabecera van los cinco puntos, que son el elemento gráfico que puede aparecer
+solo, con el nombre del producto en Inter. De paso salieron los **iconos de
+tienda**, que estaban pendientes. **Indicador de carga propio**: los cinco
+puntos saltando en secuencia con el desfase de 60 ms de la animación firma,
+movimiento de 400 ms —el máximo del sistema— dentro de un ciclo con reposo, y
+quietos con `prefers-reduced-motion`. Y **más presencia del verde** donde es
+acento y no decoración: cifras de resumen, barra de zona en las secciones,
+regla de la cabecera y el nombre del curso al pasar el cursor, este último
+verificado a 8,23:1 sobre `#242424` con `contraste.py`. 181 tests.

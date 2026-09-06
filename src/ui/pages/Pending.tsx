@@ -3,7 +3,8 @@ import { ask } from "../lib/messaging";
 import { PendingRow } from "../components/PendingRow";
 import { PendingSummary } from "../components/PendingSummary";
 import { FailureNotice } from "../components/FailureNotice";
-import { Loading, Notice } from "../components/Notice";
+import { Notice } from "../components/Notice";
+import { Cargando } from "../components/Puntos";
 
 /**
  * La pantalla que justifica la extensión: los pendientes de los once cursos en
@@ -15,7 +16,7 @@ export default function Pending() {
     queryFn: () => ask({ type: "pending" }),
   });
 
-  if (pending.isPending) return <Loading what="Estoy reuniendo tus pendientes de todos los cursos." />;
+  if (pending.isPending) return <Cargando que="Estoy reuniendo tus pendientes de todos los cursos." />;
 
   if (pending.isError || pending.data?.state === "failed") {
     const reason = pending.data?.state === "failed" ? pending.data.reason : "unexpected";
