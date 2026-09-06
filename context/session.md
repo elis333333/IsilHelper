@@ -6,36 +6,52 @@
 
 ---
 
+> **Cambio de prioridades, 6 de septiembre de 2026.** El proyecto nació para
+> archivar el material antes de que cierren el ciclo y llevaba un día en el
+> dashboard. **El propósito es archivar**; el dashboard es lo que hace
+> agradable llegar al material, no el producto. El dashboard se congela —
+> funciona, se queda, deja de crecer— y lo que crece es la descarga.
+
 **Fase 0 — cerrada.** Verificada con sesión real: "Conectado como *X*" con los
 11 cursos y su avance.
 
 **Fase 1a — cerrada.** Corrida contra la cuenta real el 5 de septiembre de
 2026 y corregida con lo que devolvió.
 
+**Fase 1b — cerrada y congelada.** Buscador hecho; retroalimentación sin
+fuente, y ya no espera turno.
+
+**Fase 2 — Descargas de Moodle. Cerrada el 6 de septiembre de 2026**, a falta
+de correrla contra la cuenta real.
+
 ## Fase actual
 
-**Fase 1b cerrada** y mergeada a `master`. Quedó en dos piezas y solo una se
-pudo construir:
+**La Fase 2 está escrita y en verde**, y lo siguiente es una sola cosa:
+**correrla contra la cuenta real**. 126 tests, `typecheck`, `lint` y `build`
+pasando, pero ni un solo archivo se ha bajado todavía de la plataforma de
+verdad. Hasta que eso ocurra, la fase no está cerrada de verdad.
 
-- **Buscador global** — hecho.
-- **Entregas con retroalimentación** — **en espera**, y no por tiempo: el
-  boletín de calificaciones está vacío en los 11 cursos, así que la pantalla no
-  tiene fuente. Se decide con el diagnóstico de octubre.
+En paralelo, **la medición de Drive por sesión**, que decide la Fase 3 entera y
+no depende de nada de lo anterior. Protocolo completo en `context/fase-3.md`
+§8: qué identificadores hacen falta, qué observar y cómo se corre.
 
-El perfil salió de la lista: no daba para una pantalla, y lo que aportaba
-—correo y `department`— está ahora en la cabecera.
-
-**Lo siguiente es la Fase 3 (Drive)**, antes que la 2, a pedido de Elis: los
-contenidos y los sílabos son lo que motivó el proyecto. El plan del OAuth se
-revisa **antes** de escribir código.
+El orden de las fases 2 y 3 **vuelve a la 2 primero**. El 5 de septiembre se
+había invertido para hacer Drive antes; el argumento —los contenidos viven en
+Drive— sigue siendo cierto y aun así el orden era el equivocado: la descarga de
+Moodle funciona hoy sin ningún obstáculo, y Drive está detrás de una decisión
+de producto sin tomar.
 
 ### Las ramas
 
 | Rama | Qué tiene |
 |---|---|
-| `master` | El producto: Fase 0, 1a y 1b. Sin modo diagnóstico |
-| `fase-1a-dashboard` | Mismo contenido que `master`; se puede borrar |
-| `diagnostico-temporal` | **Se conserva hasta octubre.** Congelada, con el producto de hoy más el modo diagnóstico |
+| `master` | El producto: Fase 0, 1a, 1b y 2. Sin código de medición |
+| `fase-1a-dashboard` | Mismo contenido que `master` en su día; se puede borrar |
+| `diagnostico-temporal` | **Se conserva hasta octubre.** Congelada, con el producto de septiembre más el modo diagnóstico |
+
+La medición de Drive **no necesita rama**: el service worker ya tiene el permiso
+`downloads`, así que la sonda es un script que se pega en su consola
+(`scripts/medir-drive.js`), no se compila y no entra en `dist/`.
 
 **`diagnostico-temporal` no se borra**, y la decisión cambia respecto a lo
 escrito en septiembre. El modo diagnóstico son unas 400 líneas medidas y
@@ -66,17 +82,47 @@ Tipos de módulo nuevos: `folder` y `zoom`. Las clases grabadas **no** son
 
 ## Siguiente paso
 
-**Revisar el plan del OAuth de la Fase 3**, que está escrito en
-`context/fase-3.md` con los dos spikes ya medidos. Nada de código de Drive
-hasta que la decisión de producto esté tomada.
+**1 · Correr la Fase 2 contra la cuenta real.** Es lo único que falta para
+poder darla por cerrada. Qué mirar, en orden:
 
-Lo que el plan propone, en corto: **abrir contenidos en pestañas** para todos
-—sin OAuth, sin `client_id` y sin ningún permiso nuevo—, y **descargar** detrás
-del `client_id` propio de cada estudiante, asumiendo que esa configuración deja
-fuera a la mayoría. Antes de comprometerse con ese muro conviene medir si
-`chrome.downloads` puede bajar de Drive con la sesión del navegador.
+- Que los 55 archivos del inventario acaben en `Descargas/IsilHelper/`, con el
+  árbol de curso y sección, y que los PDFs **abran** —no que existan: que
+  abran—. Un HTML de login pesa unos pocos KB y tiene extensión de PDF.
+- Que la cola no se pare al dormirse el service worker. La prueba es dejarla
+  corriendo con un curso entero y no tocar nada durante un minuto.
+- Que `chrome://downloads` **no** tenga entradas de IsilHelper al terminar: ahí
+  es donde quedaría la URL con el token si el `erase` fallara.
+- Que un segundo *Descargar todo el curso* diga "ya lo tienes" en vez de
+  bajarlo otra vez.
+- Los adjuntos de las tareas, que son la llamada nueva
+  (`mod_assign_get_assignments`) y la única pieza sin verificar contra datos
+  reales.
 
-Y en paralelo, **repetir el diagnóstico a partir del 6 de octubre de 2026**
+Empezar por **un curso**, no por los once: es la regla de siempre, probar con
+límite antes de correr sobre todo.
+
+**2 · La Fase 3 ya no tiene muro.** Las dos mitades están medidas, validadas
+contra el caso real y con el parser escrito:
+
+- **Descargar** con la sesión del navegador: 118 055 bytes que coinciden con lo
+  que Drive declara.
+- **Enumerar** por `embeddedfolderview`, validado sobre una carpeta de
+  «Compartidos conmigo» con la cuenta institucional, que es como el instituto
+  comparte el material.
+
+**El `client_id` desaparece del proyecto.** Ningún estudiante toca la consola
+de Google Cloud, y el OAuth queda como respaldo documentado y sin implementar
+(`fase-3.md` §8d).
+
+Lo que queda por medir son los dos límites conocidos, y ninguno bloquea:
+**las rutas de exportación de los documentos nativos** y **que una subcarpeta
+se enumere igual que la de arriba**. Los dos se miden con las sondas que ya
+existen (`fase-3.md` §8c).
+
+Después de eso, la Fase 3 es escribir el recorrido recursivo y reutilizar la
+cola de la Fase 2, que ya sabe bajar de una URL cualquiera.
+
+Y más adelante, **repetir el diagnóstico a partir del 6 de octubre de 2026**
 —desde la rama `diagnostico-temporal`—, con un mes de ciclo encima. Solo
 entonces habrá muestra para endurecer `types.ts`, y solo entonces se sabrá si
 el libro de calificaciones se llena.
@@ -98,6 +144,61 @@ Lo que ese segundo diagnóstico tiene que contestar:
 Después del segundo diagnóstico: endurecer `types.ts` y retomar la Fase 1b por
 las entregas con retroalimentación, si es que para entonces tienen fuente.
 ## Hecho
+
+### Fase 2 · descargas de Moodle
+
+El equivalente en extensión de `isil_download.py`, y la razón de ser del
+proyecto.
+
+- `src/lib/paths.ts` — saneado de nombres y ruta de destino. Puro, 16 tests.
+  Conserva tildes, se lleva por delante lo que rompe una ruta en Windows y en
+  Linux, y **nunca produce una ruta que suba de carpeta**
+- `src/api/files.ts` — qué se baja con el token y qué es enlace externo, por
+  **estructura y no por nombre**, igual que el filtro de ruido. 8 tests
+- `src/api/assign.ts` — los adjuntos del profesor, que `get_contents` no
+  devuelve: un módulo `assign` llega con `contents` vacío aunque el enunciado
+  esté colgado ahí. Cuesta una petición por curso y solo se paga si el curso
+  tiene tareas
+- `src/background/downloads.ts` — la cola. 12 tests con dobles de `chrome`
+- `src/ui/pages/Downloads.tsx` y los botones del detalle de curso
+- `src/ui/lib/inventory.ts` — el `metadata.json` del curso, con la lista de
+  archivos y los enlaces a Drive. Se genera **en la pestaña**: el service worker
+  de MV3 no tiene `URL.createObjectURL`
+- Permiso `downloads` en el manifest, que entra ahora y no antes
+
+**Decisiones de diseño de esta fase:**
+
+- **El estado de la cola vive en `storage.local`, no en memoria.** El worker se
+  duerme a los ~30 s y una cola de 55 archivos en una variable de módulo se
+  pierde a mitad de tanda. En disco, el worker puede morir: `onChanged` lo
+  despierta al terminar cada archivo y sigue donde estaba. **La reanudación no
+  es una función, es una consecuencia**
+- **Toda lectura-modificación-escritura del estado va serializada**, con la
+  misma cadena de promesas que usa `client.ts` para la pausa. Un `onChanged` y
+  una petición de la interfaz caen a la vez, y dos ciclos leyendo el mismo
+  estado se pisan la escritura
+- **Una descarga a la vez, con la pausa de 600 ms.** `chrome.downloads` no pasa
+  por `client.ts`, así que la pausa que protege del WAF hay que ponerla en la
+  cola. Cincuenta y cinco peticiones en ráfaga son un 418 seguro
+- **La entrada del historial se borra al terminar** con `chrome.downloads.erase`.
+  Los `fileurl` necesitan el token pegado, y esa URL completa quedaría anotada
+  en `chrome://downloads` a la vista de cualquiera. El archivo no se toca: lo
+  que desaparece es la anotación. Es la regla 4 del proyecto aplicada a un sitio
+  donde no se había pensado
+- **Un 200 con HTML es un fallo, no un archivo.** Cuando el token no llega,
+  Moodle devuelve la página de login con estado 200 y `chrome.downloads` la
+  guardaría tan contenta con nombre de PDF. Se mira el `mime`, se borra lo
+  bajado y se dice qué pasó
+- **`skipped` no es `done`.** Son dos respuestas distintas a "¿lo tengo?", y
+  mezclarlas haría que una tanda entera de omitidos pareciera una descarga que
+  nunca ocurrió
+- **La extensión no puede mirar el disco**, así que lleva su propio registro de
+  lo bajado. La consecuencia se dice en voz alta en la interfaz: si borras un
+  archivo a mano, la extensión sigue creyendo que lo tiene, y para eso está
+  "volver a descargar"
+- **Carpeta propia solo si el módulo trae más de un archivo.** Dos carpetas de
+  Moodle con un `guia.pdf` cada una se pisarían dentro de la misma sección, y
+  la segunda acabaría como `guia (1).pdf`, que ya no dice de dónde salió
 
 ### Fase 1b · buscador global
 
@@ -278,6 +379,20 @@ detalle completo está en `domain.md` §2.
 | El buscador solo mira la caché | Buscar de verdad serían 11 peticiones por tecla contra un WAF que castiga las ráfagas. A cambio, la pantalla declara su alcance |
 | El perfil va en la cabecera, no en una pantalla | Correo y `department` son dos líneas. Una pantalla para eso sería una pantalla que se abre una vez |
 | El perfil se guarda en `storage.local` | No cambia de un día para otro, y así son 600 ms una sola vez y no en cada apertura |
+| **El propósito es archivar; el dashboard se congela** | El proyecto nació para no perder el material al cerrar el ciclo. El dashboard hace agradable llegar a él, pero sin la descarga la herramienta no cumple nada |
+| Fase 2 antes que Fase 3 | La descarga de Moodle funciona hoy sin obstáculos; Drive está detrás de una decisión de producto sin tomar. Primero lo que no está bloqueado |
+| Estado de la cola en `storage.local` | El worker de MV3 se duerme a los 30 s. En memoria, una tanda de 55 archivos se pierde a la mitad |
+| Borrar la entrada del historial tras cada descarga | El `fileurl` lleva el token pegado y la URL quedaría anotada en `chrome://downloads`. Es la regla 4 en un sitio donde no se había pensado |
+| Registro propio de lo descargado | Una extensión no puede leer el disco. Se lleva la cuenta y **se dice que se lleva**, con salida para volver a bajar lo que se borró a mano |
+| Los adjuntos de tareas entran en la Fase 2 | `get_contents` no los devuelve y `isil_download.py` sí los bajaba. Sin ellos no hay paridad con el script |
+| El `metadata.json` se genera en la pestaña | El service worker de MV3 no tiene `URL.createObjectURL`, así que ahí no hay forma de convertir un texto en algo descargable |
+| **Scraping de Drive como vía por defecto, OAuth como respaldo** | La elección no es entre frágil y sólido, sino entre una herramienta que todos pueden usar y que algún día habrá que arreglar, y otra que la mayoría no llega a usar porque abandona en el paso tres de la consola de Google |
+| La rotura del scraping tiene que ser legible | Un scraping que falla en silencio convierte un cambio de Google en «perdí mi material». Cero archivos dice que la vía se rompió, nunca que la carpeta está vacía |
+| El parser de Drive, aislado y con tests sobre HTML real | Para que arreglarlo el día que se rompa sea cambiar un archivo, no perseguirlo por media base de código |
+| El tipo de cada entrada sale del `href`, no de `_DRIVE_ivd` | El blob da más campos —tamaño y padre— pero exige otra petición a la ruta menos estable. De lo que aporta de más, solo el mime hacía falta, y el `href` ya lo dice. Entre dos fuentes frágiles gana la que tiene rehenes: cambiar el `href` rompería todas las carpetas incrustadas del mundo |
+| Cero entradas se informa como rotura, no como carpeta vacía | El día que Drive cambie el HTML sin quitar el contenedor, todas las carpetas parecerían vacías y el estudiante concluiría que no tiene material |
+| El ancla del parser es `class="flip-entry"`, no el `id` del div | El identificador bueno está en el `href`, que es además el que se usa para bajar. Fiarse de dos sitios para el mismo dato sobra, y el atributo `id` no se usa para nada más |
+| El mime del icono es respaldo, no confirmación | Confirmar obliga a escribir una rama de «¿y si discrepan?» y a decidir cuál gana, sin ningún dato sobre cuándo ocurre. Como respaldo no toca el camino normal y salva la clasificación el día que cambien las URLs |
 
 ---
 
@@ -285,6 +400,20 @@ detalle completo está en `domain.md` §2.
 
 - [x] ~~**`.gitignore` es un directorio, no un archivo.**~~ Resuelto:
       `git check-ignore -v .env` devuelve `.gitignore:1:.env`.
+- [ ] **Correr la Fase 2 contra la cuenta real.** Escrita y en verde, pero sin
+      un solo archivo bajado de la plataforma de verdad
+- [x] ~~**Medir la descarga de Drive por sesión.**~~ Hecho el 6 de septiembre
+      de 2026: funciona sin OAuth ni `client_id`
+- [x] ~~**Medir la enumeración de carpetas.**~~ Hecho: funciona por
+      `embeddedfolderview`, sin OAuth. Parser escrito, 27 tests
+- [x] ~~**Validar la enumeración con la cuenta institucional**~~ sobre
+      «Compartidos conmigo». Hecho: responde igual, sin pedir login
+- [x] ~~**Guardar el HTML real como fixture**~~, anonimizado
+- [ ] **Medir las rutas de exportación de los nativos** y **que una subcarpeta
+      se enumere igual** (`fase-3.md` §8c). Son los dos límites conocidos que
+      quedan, y ninguno bloquea
+- [ ] **Medir las subcarpetas y los documentos nativos** (`fase-3.md` §8c), que
+      son los dos límites conocidos de la vía por defecto
 - [ ] Iconografía de tienda (16/32/48/128 px)
 - [ ] **Confirmar si las notas están en Moodle o en un SIS aparte.** Boletín
       vacío en los 11 cursos el 5 de septiembre de 2026. Se resuelve corriendo
@@ -386,3 +515,87 @@ con las mismas claves que usan las pantallas. Corregida también la jerarquía d
 los resultados: manda el nombre y el curso baja a contexto. Fase 1b cerrada y
 mergeada a `master`; `diagnostico-temporal` se conserva congelada hasta la
 corrida de octubre. Invertido el orden de las fases 2 y 3: primero Drive.
+
+**2026-09-06 · 13:10** — Cambio de prioridades de Elis, y es el correcto: el
+proyecto nació para archivar y llevaba un día en el dashboard. **El propósito
+es archivar**; el dashboard es lo que hace agradable llegar al material, no el
+producto. El dashboard se congela y la Fase 2 se escribe entera de una vez:
+botón por archivo, por sección y por curso, cola reanudable con progreso y
+pausa, saltar lo ya bajado, e índice del curso en `metadata.json` con los
+enlaces a Drive. Vuelve a invertirse el orden de las fases 2 y 3, esta vez
+hacia la 2, porque la descarga de Moodle no tiene ningún obstáculo y Drive está
+detrás de una decisión sin tomar. Tres cosas que no eran evidentes y salieron
+al escribirlo: el token pegado al `fileurl` quedaba anotado en el historial de
+descargas del navegador, así que la entrada se borra al terminar; una descarga
+corta puede acabar antes de que su id llegue a guardarse, lo que dejaba la cola
+colgada, y por eso todas las mutaciones del estado van serializadas; y los
+adjuntos del profesor no vienen en `get_contents`, así que hacen falta una
+llamada y un módulo más para tener paridad con `isil_download.py`. README
+escrito, que no existía, con el propósito por delante. 126 tests. Falta lo
+único que importa: correrlo contra la cuenta real.
+
+**2026-09-06 · 13:40** — Elis corrió la sonda de Drive: **la descarga por
+sesión funciona**. 118 055 bytes que coinciden exactamente con los 115 KB que
+Drive declara para ese PDF, sin OAuth y sin `client_id`. Cae el muro para los
+archivos, pero no para la fase: los 32 enlaces del inventario son carpetas, y
+sin enumerar no hay ids que bajar. Escrita la sonda de enumeración
+(`scripts/medir-carpetas.js`) y un detalle que habría costado horas de
+depuración en la dirección equivocada: **no se puede correr desde el service
+worker**, porque un `fetch` a `drive.google.com` desde ahí es cross-origin y
+CORS bloquea la lectura sin `host_permissions`; el síntoma es una excepción de
+red y se confunde con un rechazo de Google. Va en la consola de una pestaña de
+Drive, donde la petición es del mismo origen y no hace falta permiso ninguno.
+Prueba dos rutas —`embeddedfolderview`, que es la vista para incrustar y
+debería ser más estable, y la página completa— y reporta qué estructuras
+embebidas aparecen, con muestras del HTML para escribir el parser mirando la
+forma real. Tomada la decisión de producto: **scraping como vía por defecto,
+OAuth documentado como respaldo**, con las tres condiciones que eso exige
+—rotura legible, parser aislado con tests sobre HTML real, y respaldo escrito
+antes de que haga falta—. Ampliada la otra sonda con las rutas de exportación
+de Docs, Sheets y Slides, que no se bajan sino que se exportan y cada uno tiene
+la suya.
+
+**2026-09-06 · 15:20** — Las muestras de Elis confirman la enumeración y con
+eso **el `client_id` desaparece del proyecto**: enumerar y descargar funcionan
+los dos con la sesión del navegador. Escrito el parser en dos módulos aislados
+—`drive-links.ts` y `drive-folder.ts`, 27 tests—, porque todo el conocimiento
+sobre la forma del HTML de Drive tiene que vivir en un sitio del que se pueda
+sacar el día que Google lo cambie. La duda que planteaba Elis, si usar
+`_DRIVE_ivd` como fuente del tipo, se resuelve que no: da más campos —tamaño y
+padre— pero exige otra petición a la ruta menos estable, y de todo eso solo el
+mime hacía falta, que el `href` ya lo dice. Entre dos fuentes frágiles gana la
+que tiene rehenes. Dos trampas que encontraron los tests y no se veían venir:
+las entidades HTML acentuadas son la forma normal en material en español y son
+**sensibles a mayúsculas** —normalizar la clave convertía `&Oacute;` en `ó`
+minúscula dentro del nombre del archivo—, y el prefijo `/u/<n>/` de las rutas
+aparece en cuanto hay dos sesiones de Google abiertas, que es justo el caso de
+un estudiante con cuenta personal y cuenta del instituto. La rotura va en el
+tipo de retorno y no en un comentario: cero entradas es `reason: "shape"`,
+nunca una lista vacía. **Queda sin confirmar lo que más importa**: la medición
+se hizo con la cuenta personal de Elis, y falta repetirla con la institucional
+sobre «Compartidos conmigo», que es como están compartidas las carpetas de los
+cursos. Los fixtures de hoy están reconstruidos y el archivo lo dice en la
+primera línea; el real se captura con `anonimizarHtml()`, que la sonda ya trae
+porque el HTML de Drive lleva el correo de quien mira la carpeta. 153 tests.
+
+**2026-09-06 · 17:45** — Fixture real capturado y **verificación cerrada**: la
+carpeta era de «Compartidos conmigo» con la cuenta de ISIL, que es el caso que
+importaba, y `embeddedfolderview` respondió igual. Quitadas las marcas de «sin
+verificar» de `fase-3.md` y `domain.md` §6. El HTML real trajo dos cosas que no
+se habían visto: **el mime explícito en el icono** —segunda fuente del tipo,
+mismo HTML, ninguna petición extra— y **el `<title>` con el nombre de la
+carpeta**, que sirve para el directorio de destino. El icono se usa como
+respaldo y no como confirmación: confirmar obligaría a escribir una rama de
+«¿y si discrepan?» sin ningún dato sobre cuándo ocurre.
+
+Y el fixture destapó un fallo propio: **el anonimizador se comía el prefijo
+`entry-`** del atributo `id`, porque el patrón de identificadores incluía el
+guion. El fixture se deja tal cual vino en vez de arreglarlo a mano —es lo
+capturado, y prueba que el parser no depende de ese atributo—, y de paso se
+cambió el ancla del parser a `class="flip-entry"` sacando el identificador del
+`href`, que es el que se usa para bajar. La sonda ya está corregida. También
+salió que el aviso de «no quedan correos» del anonimizador **nunca podía
+disparar**, porque usaba el mismo patrón que la sustitución: se cambió por un
+recuento de lo sustituido y un aviso de lo que no sabe detectar, que son los
+nombres de personas de `flip-entry-last-writer`. 160 tests. Commiteado todo lo
+pendiente: la Fase 2 y el parser llevaban demasiado tiempo sin versionar.

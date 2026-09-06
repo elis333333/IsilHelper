@@ -349,10 +349,98 @@ de descarga. Tratarlos como archivo por defecto falla.
 **Los documentos nativos de Google** (Docs, Slides, Sheets) no son binarios: hay
 que exportarlos a PDF/DOCX/PPTX.
 
+### Descarga por sesión — medido el 6 de septiembre de 2026
+
+**`chrome.downloads` baja de Drive con la sesión del navegador, sin OAuth y sin
+`client_id`.**
+
+```
+chrome.downloads.download(
+  "https://drive.usercontent.google.com/download?id=<ID>&export=download")
+→ complete · 118 055 bytes, que coinciden con los 115 KB que Drive declara
+```
+
+Dos detalles que no son evidentes:
+
+- **No hace falta `host_permissions` para bajar.**
+  `chrome.downloads.download` no exige permiso de host sobre la URL que
+  descarga; le basta el permiso `downloads`.
+- **Sí hace falta para *leer* una página de Drive.** Un `fetch` con
+  `credentials: "include"` desde el service worker hacia `drive.google.com` es
+  cross-origin, y sin permiso de host CORS bloquea la lectura. El síntoma es
+  una excepción de red, que se parece demasiado a «Google lo rechazó» y lleva a
+  la conclusión equivocada.
+
+### Enumerar carpetas por sesión — medido el 6 de septiembre de 2026
+
+**También funciona sin OAuth.** Los enlaces de los cursos son carpetas, y bajar
+un archivo requiere su id, así que sin esto la descarga no servía de nada.
+
+La fuente es `embeddedfolderview`, la vista que Drive sirve para incrustar una
+carpeta en otra página. Devuelve HTML plano, sin blobs JS:
+
+```
+https://drive.google.com/embeddedfolderview?id=<ID>#list
+
+<div class="flip-entry" id="entry-<ID>">
+  <a href="https://drive.google.com/file/d/<ID>/view">
+    <div class="flip-entry-title">30628-SILABO.pdf</div>
+  </a>
+</div>
+```
+
+**El tipo sale del `href`**, no de otra fuente: `/folders/` es carpeta,
+`/file/d/` es binario, `/document/d/` y sus hermanas son documentos nativos. Es
+la misma clasificación por forma de enlace que ya estaba en la tabla de arriba,
+y es lo que distingue una subcarpeta —que se recorre— de un archivo —que se
+baja— y de un nativo —que se exporta—.
+
+La página completa de la carpeta lleva además un `_DRIVE_ivd` que, decodificado
+del hexadecimal, da id, padre, nombre, mimeType y **tamaño**:
+
+```
+["<fileId>", ["<parentId>"], "30628-SILABO.pdf", "application/pdf", 0, …, 118055, …]
+```
+
+**No se usa**, y la razón está en `fase-3.md` §8b: de todo lo que aporta de más,
+solo el mime hacía falta y el `href` ya lo da; a cambio exige otra petición a
+una ruta menos estable y decodificar un blob interno. Queda anotado como
+segunda fuente por si algún día hace falta el tamaño.
+
+**Dos trampas del parseo**, las dos encontradas escribiéndolo:
+
+- **Las entidades HTML acentuadas.** `Introducci&oacute;n.pdf` es la forma
+  normal en material en español. Y son sensibles a mayúsculas: normalizar la
+  clave convierte `&Oacute;` en `ó` minúscula dentro del nombre del archivo.
+- **El prefijo `/u/<n>/`** en las rutas (`/drive/u/0/folders/<id>`). Aparece en
+  cuanto el navegador tiene varias sesiones de Google abiertas, que es
+  exactamente el caso de un estudiante con cuenta personal y cuenta del
+  instituto.
+
+**Validado contra el caso real.** Las carpetas de los cursos no son públicas ni
+propias: están en «Compartidos conmigo» de la cuenta institucional. Medido así
+el 6 de septiembre de 2026 —cuenta de ISIL, carpeta compartida— responde igual,
+sin pedir login, con 2,3 KB de HTML.
+
+**El mime viene además explícito en el icono**, en el `src` de
+`drive-thirdparty.googleusercontent.com/16/type/application/pdf`. Es una
+segunda fuente del tipo dentro del mismo HTML y sin peticiones extra; se usa
+**solo como respaldo** cuando el `href` no clasifica, no como confirmación
+(`fase-3.md` §8b).
+
+**El `<title>` de la página es el nombre de la carpeta**, útil para nombrar el
+directorio de destino sin pedirlo aparte.
+
+**Esto es scraping**, y Google puede cambiar esa página sin avisar. Se asume a
+propósito, con tres condiciones —rotura legible, parser aislado con tests, y
+respaldo OAuth documentado— que están en `fase-3.md` §8b.
+
 ### En la extensión
 
-`chrome.identity.launchWebAuthFlow` con scope `drive.readonly`. Cada estudiante
-autoriza su propio acceso; no hay credenciales compartidas.
+Si hiciera falta OAuth: `chrome.identity.launchWebAuthFlow` con scope
+`drive.readonly`, y cada estudiante autoriza su propio acceso; no hay
+credenciales compartidas. **Queda como respaldo**, no como vía por defecto
+(`fase-3.md` §8d).
 
 ---
 
@@ -375,6 +463,13 @@ alcance** para la extensión; queda como script aparte si algún día importa.
 ---
 
 ## 9. Lo que no se sabe todavía
+
+- **Si las rutas de exportación de los documentos nativos funcionan por
+  sesión.** El parser ya sabe a cuál va cada tipo, pero ninguna está medida
+- **Si una subcarpeta se enumera igual que la de arriba.** El parser ya las
+  distingue por el `href`; falta correr la sonda con el id de una
+- **Qué devuelve una carpeta vacía de verdad.** Hoy se informa como rotura a
+  propósito, que es el lado seguro (`fase-3.md` §8b)
 
 - **Si las notas están en Moodle o en un SIS aparte.** El 5 de septiembre de
   2026 el libro de calificaciones estaba **vacío en los 11 cursos**: ningún
