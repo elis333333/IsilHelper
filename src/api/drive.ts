@@ -38,42 +38,6 @@ export type DriveError = {
   status?: number;
   /** Presente en `network`. */
   detail?: string;
-  /**
-   * DIAGNÓSTICO TEMPORAL. Se añadió el 6 de septiembre de 2026 para averiguar
-   * por qué la enumeración falla desde la extensión cuando desde una pestaña
-   * de Drive funciona. **Se quita cuando la causa esté encontrada.**
-   */
-  diagnostics?: DriveDiagnostics;
-};
-
-/**
- * Lo que se mide cuando la enumeración falla.
- *
- * Existe para descartar por medición las tres causas posibles, en vez de por
- * deducción: que falte `credentials`, que el permiso de host no esté
- * concedido, o que Google devuelva a la extensión un HTML distinto del que le
- * da a una pestaña. La medición que validó la vía se hizo desde una pestaña de
- * Drive, donde la petición era del mismo origen; **desde la extensión no lo
- * es, y esa diferencia no se había medido**.
- *
- * No guarda el HTML: llevaría el correo de quien mira la carpeta. Solo
- * indicadores.
- */
-export type DriveDiagnostics = {
-  /** Si el permiso de host está concedido de verdad, que es distinto de estar
-   *  declarado en el manifest: al añadirlo a una extensión ya cargada hay que
-   *  recargarla. */
-  permissionGranted: boolean | null;
-  /** Qué modo de credenciales se usó, para descartar la primera hipótesis. */
-  credentials: string;
-  status: number | null;
-  bytes: number | null;
-  /** El contenedor de la vista incrustada. Si no está, el HTML no es ese. */
-  hasFlipEntries: boolean | null;
-  looksLikeLogin: boolean | null;
-  /** El principio del HTML, sin datos personales, para reconocer qué llegó. */
-  head: string | null;
-  failure: string;
 };
 
 export type DriveDeps = {
@@ -114,25 +78,12 @@ export function resetDriveThrottle(): void {
  *  cookie de Google, porque desde la extensión es cross-origin. */
 const CREDENTIALS: RequestCredentials = "include";
 
-/** ¿Está concedido el permiso de host, no solo declarado? Son cosas distintas:
- *  al añadirlo a una extensión ya cargada hace falta recargarla. */
-async function hostPermissionGranted(): Promise<boolean | null> {
-  try {
-    return await chrome.permissions.contains({ origins: ["https://drive.google.com/*"] });
-  } catch {
-    return null;
-  }
-}
-
 /** Lee el contenido de una carpeta de Drive. */
 export async function fetchFolder(
   folderId: string,
   deps: DriveDeps = realDriveDeps,
 ): Promise<Result<FolderListing & { ok: true }, DriveError>> {
   await throttle(deps);
-
-  const granted = await hostPermissionGranted();
-  const base = { permissionGranted: granted, credentials: CREDENTIALS };
 
   let response: Response;
   try {
@@ -144,40 +95,16 @@ export async function fetchFolder(
     });
   } catch (cause) {
     const detail = cause instanceof Error ? `${cause.name}: ${cause.message}` : String(cause);
-    const diagnostics: DriveDiagnostics = {
-      ...base,
-      status: null,
-      bytes: null,
-      hasFlipEntries: null,
-      looksLikeLogin: null,
-      head: null,
-      failure: detail,
-    };
-    if (cause instanceof Error && cause.name === "TimeoutError") {
-      return err({ kind: "timeout", diagnostics });
-    }
-    return err({ kind: "network", detail, diagnostics });
+    if (cause instanceof Error && cause.name === "TimeoutError") return err({ kind: "timeout" });
+    return err({ kind: "network", detail });
   }
 
-  const html = await response.text();
-  const diagnostics: DriveDiagnostics = {
-    ...base,
-    status: response.status,
-    bytes: html.length,
-    hasFlipEntries: html.includes("flip-entries") || html.includes("flip-entry"),
-    looksLikeLogin: /accounts\.google\.com|ServiceLogin|signin/i.test(html),
-    head: html.slice(0, 200).replace(/\s+/g, " "),
-    failure: "",
-  };
+  if (response.status !== 200) return err({ kind: "http", status: response.status });
 
-  if (response.status !== 200) {
-    return err({ kind: "http", status: response.status, diagnostics });
-  }
-
-  const listing = parseFolderHtml(html);
+  const listing = parseFolderHtml(await response.text());
   // La rotura del parser sube tal cual: son las dos causas que la interfaz
   // sabe explicar por separado.
-  if (!listing.ok) return err({ kind: listing.reason, diagnostics });
+  if (!listing.ok) return err({ kind: listing.reason });
 
   return ok(listing);
 }

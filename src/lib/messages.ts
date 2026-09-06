@@ -192,22 +192,6 @@ export type DriveExploration = {
   /** Se alcanzó un tope del recorrido, así que **puede faltar material**. */
   truncated: boolean;
   foldersRead: number;
-  /** DIAGNÓSTICO TEMPORAL (6 de septiembre de 2026): lo medido en el primer
-   *  fallo, para averiguar por qué la enumeración no funciona desde la
-   *  extensión. Se quita cuando la causa esté encontrada. */
-  diagnostics: DriveDiagnosticsView | null;
-};
-
-/** Lo medido cuando la enumeración falla, en texto plano para poder copiarlo. */
-export type DriveDiagnosticsView = {
-  permissionGranted: boolean | null;
-  credentials: string;
-  status: number | null;
-  bytes: number | null;
-  hasFlipEntries: boolean | null;
-  looksLikeLogin: boolean | null;
-  head: string | null;
-  failure: string;
 };
 
 /**
@@ -222,7 +206,7 @@ export type DriveDiagnosticsView = {
 export type DriveExplorationResult =
   | { state: "ok"; value: DriveExploration }
   | { state: "course-failed"; reason: FailureReason }
-  | { state: "drive-failed"; detail: string; diagnostics: DriveDiagnosticsView | null };
+  | { state: "drive-failed"; detail: string };
 
 export type BackgroundRequest =
   | { type: "session" }

@@ -431,9 +431,58 @@ segunda fuente del tipo dentro del mismo HTML y sin peticiones extra; se usa
 **El `<title>` de la página es el nombre de la carpeta**, útil para nombrar el
 directorio de destino sin pedirlo aparte.
 
+**Desde el service worker se comporta igual que desde una pestaña.** Medido el
+6 de septiembre de 2026, que era la duda que quedaba: la validación se había
+hecho desde una pestaña de Drive, donde la petición es del mismo origen, y
+desde la extensión no lo es.
+
+```
+permiso de host concedido · credentials: include
+→ HTTP 200 · 1280 bytes · flip-entries presente
+```
+
+Con `host_permissions` para `drive.google.com` y `credentials: "include"`,
+Google devuelve el mismo HTML a la extensión que a una pestaña. **No hay trato
+distinto por origen.**
+
 **Esto es scraping**, y Google puede cambiar esa página sin avisar. Se asume a
 propósito, con tres condiciones —rotura legible, parser aislado con tests, y
 respaldo OAuth documentado— que están en `fase-3.md` §8b.
+
+### La advertencia de antivirus — medida el 6 de septiembre de 2026
+
+**Los archivos que pasan de cierto tamaño no se bajan a la primera.** En vez
+del binario, Google devuelve una página que dice que no ha podido analizarlo y
+pide confirmar, con **estado 200 y `Content-Type: text/html`**. Sin
+comprobarlo, `chrome.downloads` la guarda con nombre de `.pptx`.
+
+En la primera tanda real fallaron dos presentaciones y ningún PDF: **los PPTX
+pesan más, y por eso solo fallaban esos**. El síntoma engaña —parece falta de
+sesión— pero el archivo siguiente baja bien con la misma sesión un segundo
+después. Atribuirlo a la sesión manda a arreglar lo que no está roto.
+
+La solución es la que haría el navegador al pulsar el botón: leer el
+formulario y repetir la petición con todos sus campos.
+
+```html
+<form id="download-form" action="https://drive.usercontent.google.com/download">
+  <input type="hidden" name="id"      value="…">
+  <input type="hidden" name="export"  value="download">
+  <input type="hidden" name="confirm" value="t">
+  <input type="hidden" name="uuid"    value="…">
+</form>
+```
+
+**No basta con añadir `confirm=t`**: el `uuid` es de esa sesión de descarga y
+sin él Google vuelve a preguntar. Se reenvía el formulario entero.
+
+Leer esa página exige `https://drive.usercontent.google.com/*` en
+`host_permissions` —es la tercera y última—, porque el `fetch` es cross-origin.
+Descargar de ahí, en cambio, sigue sin necesitar permiso.
+
+**Cuidado con reintentar a ciegas:** la pantalla de acceso de Google también
+llega como HTML con estado 200. Si no se distingue de la confirmación, el
+reintento entra en bucle contra una página que nunca va a dar el archivo.
 
 ### En la extensión
 
@@ -466,8 +515,6 @@ alcance** para la extensión; queda como script aparte si algún día importa.
 
 - **Si las rutas de exportación de los documentos nativos funcionan por
   sesión.** El parser ya sabe a cuál va cada tipo, pero ninguna está medida
-- **Si una subcarpeta se enumera igual que la de arriba.** El parser ya las
-  distingue por el `href`; falta correr la sonda con el id de una
 - **Qué devuelve una carpeta vacía de verdad.** Hoy se informa como rotura a
   propósito, que es el lado seguro (`fase-3.md` §8b)
 

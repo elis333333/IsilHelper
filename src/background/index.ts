@@ -97,7 +97,6 @@ async function exploreDrive(
     return {
       state: "drive-failed",
       detail: cause instanceof Error ? `${cause.name}: ${cause.message}` : String(cause),
-      diagnostics: null,
     };
   }
 }

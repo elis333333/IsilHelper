@@ -22,12 +22,7 @@ import { classifyDriveUrl, downloadUrl, exportExtension } from "../api/drive-lin
 import { fetchFolder, explainDriveError } from "../api/drive";
 import { walkFolder, type FoundFile, type WalkResult } from "../api/drive-walk";
 import { drivePath } from "../lib/paths";
-import type {
-  DriveDiagnosticsView,
-  DriveExploration,
-  DriveProblemView,
-  QueuedFile,
-} from "../lib/messages";
+import type { DriveExploration, DriveProblemView, QueuedFile } from "../lib/messages";
 
 /** Un enlace de Drive de un curso, tal como lo ve el detalle de curso. */
 export type DriveLinkInput = {
@@ -75,9 +70,6 @@ export async function exploreCourseDrive(
   const problems: DriveProblemView[] = [];
   let truncated = false;
   let foldersRead = 0;
-  // DIAGNÓSTICO TEMPORAL: lo medido en el primer fallo. Uno basta para saber
-  // qué está pasando, y guardar todos sería ruido.
-  let diagnostics: DriveDiagnosticsView | null = null;
 
   for (const link of links) {
     const target = classifyDriveUrl(link.url);
@@ -114,18 +106,13 @@ export async function exploreCourseDrive(
     truncated = truncated || walk.truncated;
     problems.push(...toProblemViews(walk, link.moduleName));
 
-    if (diagnostics === null) {
-      diagnostics = walk.problems.find((p) => p.error.diagnostics !== undefined)
-        ?.error.diagnostics ?? null;
-    }
-
     for (const found of walk.files) {
       const queued = toQueuedFile(found, courseName, link);
       if (queued !== null) files.push(queued);
     }
   }
 
-  return { files, problems, truncated, foldersRead, diagnostics };
+  return { files, problems, truncated, foldersRead };
 }
 
 /** `null` cuando no se sabe cómo bajarlo: un tipo desconocido no se adivina. */
