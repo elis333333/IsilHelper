@@ -192,7 +192,37 @@ export type DriveExploration = {
   /** Se alcanzó un tope del recorrido, así que **puede faltar material**. */
   truncated: boolean;
   foldersRead: number;
+  /** DIAGNÓSTICO TEMPORAL (6 de septiembre de 2026): lo medido en el primer
+   *  fallo, para averiguar por qué la enumeración no funciona desde la
+   *  extensión. Se quita cuando la causa esté encontrada. */
+  diagnostics: DriveDiagnosticsView | null;
 };
+
+/** Lo medido cuando la enumeración falla, en texto plano para poder copiarlo. */
+export type DriveDiagnosticsView = {
+  permissionGranted: boolean | null;
+  credentials: string;
+  status: number | null;
+  bytes: number | null;
+  hasFlipEntries: boolean | null;
+  looksLikeLogin: boolean | null;
+  head: string | null;
+  failure: string;
+};
+
+/**
+ * El resultado de explorar Drive.
+ *
+ * Distingue **quién respondió mal**, que es lo que decide el mensaje. Un fallo
+ * al cargar el curso es de la plataforma del instituto; uno al leer una
+ * carpeta es de Google. Usar el mismo aviso para los dos le dice al estudiante
+ * que el instituto cambió algo cuando el que cambió fue Drive, y lo manda a
+ * arreglar lo que no está roto.
+ */
+export type DriveExplorationResult =
+  | { state: "ok"; value: DriveExploration }
+  | { state: "course-failed"; reason: FailureReason }
+  | { state: "drive-failed"; detail: string; diagnostics: DriveDiagnosticsView | null };
 
 export type BackgroundRequest =
   | { type: "session" }
@@ -234,7 +264,7 @@ export type ResponseMap = {
   retryQueue: QueueSnapshot;
   stored: string[];
   forgetStored: string[];
-  exploreDrive: Loaded<DriveExploration>;
+  exploreDrive: DriveExplorationResult;
 };
 
 export type ResponseFor<K extends BackgroundRequest["type"]> = ResponseMap[K];

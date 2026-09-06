@@ -3,8 +3,13 @@ import { ask } from "../lib/messaging";
 import { useQueueAction } from "../lib/downloads";
 import { plural } from "../lib/format";
 import { Notice } from "./Notice";
+import { Cargando } from "./Puntos";
 import { FailureNotice } from "./FailureNotice";
-import type { CourseDetail, DriveExploration } from "../../lib/messages";
+import type {
+  CourseDetail,
+  DriveDiagnosticsView,
+  DriveExploration,
+} from "../../lib/messages";
 
 /**
  * Descarga del material que vive en Google Drive.
@@ -63,17 +68,47 @@ export function DrivePanel({ detail }: { detail: CourseDetail }) {
       </div>
 
       {explore.isPending && (
-        <p className="parrafo parrafo--apagado">
-          Estoy abriendo cada carpeta y sus subcarpetas. Con muchos temas puede tardar un par
-          de minutos.
-        </p>
+        <div style={{ marginTop: "var(--space-4)" }}>
+          <Cargando que="Estoy abriendo cada carpeta y sus subcarpetas." />
+          <p className="parrafo parrafo--apagado" style={{ marginTop: "var(--space-3)" }}>
+            Con muchos temas puede tardar un par de minutos.
+          </p>
+        </div>
       )}
 
-      {(explore.isError || explore.data?.state === "failed") && (
+      {/* Un fallo al cargar el curso SÍ es de la plataforma del instituto. */}
+      {explore.data?.state === "course-failed" && (
         <FailureNotice
-          reason={explore.data?.state === "failed" ? explore.data.reason : "unexpected"}
+          reason={explore.data.reason}
           onRetry={() => explore.mutate()}
           retrying={explore.isPending}
+        />
+      )}
+
+      {/* Uno al leer las carpetas es de Google, y se dice así. */}
+      {explore.data?.state === "drive-failed" && (
+        <Notice
+          tone="error"
+          symbol="✕"
+          title="No pude leer tus carpetas de Drive"
+          detail="La extensión pidió el contenido a Google y no obtuvo lo que esperaba.
+                  Esto no tiene que ver con la plataforma del instituto."
+          hint="Comprueba que tienes sesión de Google en este navegador."
+        >
+          <DiagnosticsBlock
+            diagnostics={explore.data.diagnostics}
+            failure={explore.data.detail}
+          />
+        </Notice>
+      )}
+
+      {explore.isError && (
+        <Notice
+          tone="error"
+          symbol="✕"
+          title="La extensión no respondió"
+          detail="El proceso que explora Drive se cortó antes de contestar."
+          hint="Vuelve a intentarlo. Si se repite, recarga la extensión desde chrome://extensions."
         />
       )}
 
@@ -102,7 +137,9 @@ function ExplorationReport({ result }: { result: DriveExploration }) {
           detail="Puede que estén vacías, o que Google haya cambiado la página que la
                   extensión lee para mirar dentro."
           hint="Si crees que debería haber material, abre la carpeta en Drive para comprobarlo."
-        />
+        >
+          <DiagnosticsBlock diagnostics={result.diagnostics} failure="" />
+        </Notice>
       ) : (
         <p className="parrafo">
           Encontré <strong>{plural(result.files.length, "archivo", "archivos")}</strong> en{" "}
@@ -119,6 +156,10 @@ function ExplorationReport({ result }: { result: DriveExploration }) {
                   vez, así que puede faltar material."
           hint="Baja lo encontrado y vuelve a explorar: lo que ya esté no se repite."
         />
+      )}
+
+      {result.diagnostics !== null && result.problems.length > 0 && (
+        <DiagnosticsBlock diagnostics={result.diagnostics} failure="" />
       )}
 
       {result.problems.length > 0 && (
@@ -144,5 +185,67 @@ function ExplorationReport({ result }: { result: DriveExploration }) {
         </div>
       )}
     </>
+  );
+}
+
+/**
+ * DIAGNÓSTICO TEMPORAL — 6 de septiembre de 2026.
+ *
+ * La enumeración funciona desde una pestaña de Drive y falla desde la
+ * extensión. La diferencia es que desde la pestaña la petición es del mismo
+ * origen y desde la extensión no, y esa diferencia no se había medido. Esto
+ * enseña lo medido para descartar las tres causas posibles **por medición y no
+ * por deducción**:
+ *
+ * - `credenciales` distinto de `include` → la cookie de Google no viaja.
+ * - `permiso` en falso → `host_permissions` declarado pero no concedido,
+ *   normalmente porque la extensión no se recargó tras añadirlo.
+ * - `estado 200` con bytes y sin `flip-entries` → Google le da a la extensión
+ *   un HTML distinto del que le da a una pestaña.
+ *
+ * **Se quita en cuanto la causa esté encontrada.**
+ */
+function DiagnosticsBlock({
+  diagnostics,
+  failure,
+}: {
+  diagnostics: DriveDiagnosticsView | null;
+  failure: string;
+}) {
+  if (diagnostics === null && failure === "") return null;
+
+  const rows = diagnostics === null
+    ? []
+    : [
+        ["permiso de host concedido", String(diagnostics.permissionGranted)],
+        ["credenciales", diagnostics.credentials],
+        ["estado HTTP", String(diagnostics.status)],
+        ["bytes recibidos", String(diagnostics.bytes)],
+        ["contiene flip-entries", String(diagnostics.hasFlipEntries)],
+        ["parece pantalla de acceso", String(diagnostics.looksLikeLogin)],
+        ["fallo", diagnostics.failure === "" ? "—" : diagnostics.failure],
+      ];
+
+  return (
+    <div className="diagnostico">
+      <p className="diagnostico__titulo">Diagnóstico (temporal)</p>
+      <ul className="lista dato-tecnico">
+        {rows.map(([label, value]) => (
+          <li key={label} className="diagnostico__fila">
+            <span className="diagnostico__clave">{label}</span>
+            <span className="diagnostico__valor">{value}</span>
+          </li>
+        ))}
+        {failure !== "" && (
+          <li className="diagnostico__fila">
+            <span className="diagnostico__clave">excepción</span>
+            <span className="diagnostico__valor">{failure}</span>
+          </li>
+        )}
+      </ul>
+      {diagnostics?.head !== null && diagnostics?.head !== undefined && (
+        <p className="dato-tecnico diagnostico__head">{diagnostics.head}</p>
+      )}
+    </div>
   );
 }

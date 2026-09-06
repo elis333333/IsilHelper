@@ -83,9 +83,23 @@ async function exploreDrive(
   courseId: number,
   courseName: string,
 ): Promise<ResponseMap["exploreDrive"]> {
+  // Cargar el curso es cosa de la plataforma; leer las carpetas, de Google.
+  // Los dos fallos se devuelven por separado porque llevan mensajes distintos.
   const links = await driveLinksOf(courseId, courseName);
-  if (links.state !== "ok") return links;
-  return { state: "ok", value: await exploreCourseDrive(courseName, links.value) };
+  if (links.state !== "ok") return { state: "course-failed", reason: links.reason };
+
+  try {
+    return { state: "ok", value: await exploreCourseDrive(courseName, links.value) };
+  } catch (cause) {
+    // Sin esto, una excepción aquí deja la petición sin respuesta y la
+    // interfaz enseña el aviso genérico de la plataforma, que es justo la
+    // atribución equivocada que se está corrigiendo.
+    return {
+      state: "drive-failed",
+      detail: cause instanceof Error ? `${cause.name}: ${cause.message}` : String(cause),
+      diagnostics: null,
+    };
+  }
 }
 
 chrome.runtime.onMessage.addListener(
