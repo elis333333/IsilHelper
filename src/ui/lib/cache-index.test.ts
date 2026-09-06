@@ -41,10 +41,13 @@ const detail = (courseId: number): Loaded<CourseDetail> => ({
         id: 1,
         name: "Contenidos",
         modules: [
-          { id: 11, name: "T01 - Introducción", kind: "url", completed: null, url: null, fileCount: 0 },
+          { id: 11, name: "T01 - Introducción", kind: "url", completed: null, url: null, files: [], externalCount: 1 },
         ],
       },
     ],
+    files: [],
+    links: [],
+    attachmentsFailed: false,
   },
 });
 

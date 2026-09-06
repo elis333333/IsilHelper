@@ -3,6 +3,14 @@
  * interfaz**: la UI pregunta si hay sesión, no cuál es el token.
  */
 
+import type { QueueItem } from "./messages";
+
+/** Lo mismo que ve la interfaz, más el id que devuelve `chrome.downloads`.
+ *  Ese id es un detalle del worker y no cruza el contrato de mensajes. */
+export type QueueEntry = QueueItem & { downloadId: number | null };
+
+export type QueueState = { items: QueueEntry[]; paused: boolean };
+
 const TOKEN_KEY = "moodleToken";
 
 export async function readToken(): Promise<string | null> {
@@ -58,4 +66,66 @@ export async function readProfile(): Promise<StoredProfile | null> {
 
 export async function writeProfile(profile: StoredProfile): Promise<void> {
   await chrome.storage.local.set({ [PROFILE_KEY]: profile });
+}
+
+// --------------------------------------------------------------------------
+// Descargas
+// --------------------------------------------------------------------------
+
+const QUEUE_KEY = "downloadQueue";
+const LOG_KEY = "downloadLog";
+
+/**
+ * Estado de la cola, en disco y no en memoria.
+ *
+ * El service worker de MV3 se duerme a los ~30 s, así que una cola guardada en
+ * una variable de módulo se pierde a mitad de una tanda de 55 archivos y el
+ * estudiante ve la descarga pararse sin motivo. Guardada aquí, el worker puede
+ * morir y despertar cuando `chrome.downloads` avisa de que algo terminó, y
+ * seguir donde estaba.
+ */
+export async function readQueue(): Promise<QueueState> {
+  const stored = await chrome.storage.local.get(QUEUE_KEY);
+  const value: unknown = stored[QUEUE_KEY];
+  if (typeof value !== "object" || value === null) return { items: [], paused: false };
+
+  const record = value as Record<string, unknown>;
+  return {
+    items: Array.isArray(record.items) ? (record.items as QueueEntry[]) : [],
+    paused: record.paused === true,
+  };
+}
+
+export async function writeQueue(state: QueueState): Promise<void> {
+  await chrome.storage.local.set({ [QUEUE_KEY]: state });
+}
+
+/**
+ * Registro de lo ya descargado, por ruta de destino.
+ *
+ * No hay forma de preguntarle al disco si un archivo sigue ahí —una extensión
+ * no lee el sistema de archivos—, así que la extensión lleva su propia cuenta.
+ * La consecuencia hay que decirla en voz alta: si el estudiante borra un
+ * archivo a mano, la extensión seguirá creyendo que lo tiene. Para eso está
+ * "volver a descargar", que olvida la ruta y la encola de nuevo.
+ */
+export async function readLog(): Promise<Record<string, number>> {
+  const stored = await chrome.storage.local.get(LOG_KEY);
+  const value: unknown = stored[LOG_KEY];
+  if (typeof value !== "object" || value === null) return {};
+  return value as Record<string, number>;
+}
+
+export async function markStored(paths: string[], at: number): Promise<void> {
+  if (paths.length === 0) return;
+  const log = await readLog();
+  for (const path of paths) log[path] = at;
+  await chrome.storage.local.set({ [LOG_KEY]: log });
+}
+
+export async function forgetStored(paths: string[]): Promise<void> {
+  if (paths.length === 0) return;
+  const log = await readLog();
+  for (const path of paths) delete log[path];
+  await chrome.storage.local.set({ [LOG_KEY]: log });
 }

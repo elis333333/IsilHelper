@@ -241,3 +241,110 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ---------- Descargas ----------
+   Todos los valores salen de tokens.css: radio 0, sin sombras, y la
+   profundidad por superficie y borde de 1 px. */
+
+/* La sección deja de ser solo un título: ahora lleva su acción a la derecha. */
+.seccion__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+.seccion__cabecera .subtitulo { margin-bottom: 0; }
+
+.acciones--curso {
+  flex-wrap: wrap;
+  margin-top: 0;
+  margin-bottom: var(--space-6);
+}
+
+/* Estado de "ya lo tienes", que sustituye al botón cuando no hay nada que
+   bajar. Lleva la salida para volver a bajarlo al lado, porque la extensión no
+   puede mirar el disco y a veces se equivoca. */
+.accion-hecha {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  white-space: nowrap;
+}
+
+/* La fila del módulo pasa a llevar acción, así que el nombre cede el espacio
+   sobrante y el botón nunca se parte en dos líneas. */
+.modulo { align-items: center; }
+
+/* Archivos de un módulo que trae más de uno. Sangrados bajo su módulo. */
+.archivos {
+  margin: 0 0 var(--space-3) var(--space-8);
+  border-left: 1px solid var(--color-border);
+}
+
+.archivo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-4);
+}
+.archivo__nombre { flex: 1 1 auto; min-width: 0; color: var(--color-text); }
+.archivo__meta {
+  font-family: var(--font-mono);
+  font-size: var(--text-body-sm);
+  color: var(--color-text-subtle);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Filas de la cola ---------- */
+.cola {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+.cola + .cola { margin-top: var(--space-2); }
+
+.cola__estado {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 0 0 auto;
+  min-width: 8rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-mono-label);
+  white-space: nowrap;
+}
+
+.cola__cuerpo { flex: 1 1 320px; min-width: 0; }
+.cola__nombre {
+  display: block;
+  color: var(--color-heading);
+  font-weight: var(--weight-medium);
+  overflow-wrap: anywhere;
+}
+.cola__contexto {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+}
+.cola__error { display: block; margin-top: var(--space-2); }
+
+/* La barra nunca va sola: al lado siempre está el porcentaje en texto. */
+.cola .barra { display: block; margin-top: var(--space-3); }
+
+.cola__meta {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-body-sm);
+  color: var(--color-text-subtle);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}

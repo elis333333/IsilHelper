@@ -6,7 +6,7 @@ import pkg from "./package.json" with { type: "json" };
 // puede justificar, y los revisores de tienda preguntan.
 //
 //   Fase 0  storage, webRequest, host platform.ecala.net
-//   Fase 2  + downloads
+//   Fase 2  + downloads                       ← concedido: la cola ya existe
 //   Fase 3  + identity, host www.googleapis.com
 export default defineManifest({
   manifest_version: 3,
@@ -26,6 +26,6 @@ export default defineManifest({
     default_title: "Abrir IsilHelper",
   },
 
-  permissions: ["storage", "webRequest"],
+  permissions: ["storage", "webRequest", "downloads"],
   host_permissions: ["https://platform.ecala.net/*"],
 });

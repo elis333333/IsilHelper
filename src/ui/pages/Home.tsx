@@ -12,6 +12,7 @@ import Courses from "./Courses";
 import CourseDetail from "./CourseDetail";
 import Grades from "./Grades";
 import Search from "./Search";
+import Downloads from "./Downloads";
 
 /** Armazón de la aplicación: primero la sesión, y solo con sesión válida se
  *  monta la navegación y la vista actual. */
@@ -90,6 +91,7 @@ export default function Home() {
       {view.name === "courses" && <Courses />}
       {view.name === "grades" && <Grades />}
       {view.name === "search" && <Search />}
+      {view.name === "downloads" && <Downloads />}
       {view.name === "course" && (
         <CourseDetail courseId={view.courseId} courseName={view.courseName} />
       )}

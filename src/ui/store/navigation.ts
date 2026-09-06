@@ -9,6 +9,7 @@ export type View =
   | { name: "courses" }
   | { name: "grades" }
   | { name: "search" }
+  | { name: "downloads" }
   | { name: "course"; courseId: number; courseName: string };
 
 type NavigationState = {

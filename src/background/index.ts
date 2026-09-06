@@ -10,9 +10,25 @@
 import { registerTokenCapture } from "./auth";
 import { connect, disconnect, readSession } from "./session";
 import { loadContents, loadCourses, loadGrades, loadPending } from "./data";
+import {
+  clearQueue,
+  enqueue,
+  forgetPaths,
+  pauseQueue,
+  queueSnapshot,
+  registerDownloadQueue,
+  resumeQueue,
+  retryQueue,
+  storedAmong,
+} from "./downloads";
 import type { BackgroundRequest, ResponseMap } from "../lib/messages";
 
 registerTokenCapture();
+
+// El listener de descargas es además lo que despierta al worker a mitad de una
+// tanda larga: sin él registrado aquí arriba, una cola de 55 archivos se para
+// en cuanto MV3 duerme el worker.
+registerDownloadQueue();
 
 // La interfaz vive en una pestaña. Sin `default_popup` en el manifest, este
 // evento sí dispara al pulsar el ícono.
@@ -38,6 +54,22 @@ function handle(
       return loadContents(request.courseId, request.courseName);
     case "grades":
       return loadGrades();
+    case "enqueue":
+      return enqueue(request.files);
+    case "queue":
+      return queueSnapshot();
+    case "pauseQueue":
+      return pauseQueue();
+    case "resumeQueue":
+      return resumeQueue();
+    case "clearQueue":
+      return clearQueue();
+    case "retryQueue":
+      return retryQueue();
+    case "stored":
+      return storedAmong(request.paths);
+    case "forgetStored":
+      return forgetPaths(request.paths);
   }
 }
 

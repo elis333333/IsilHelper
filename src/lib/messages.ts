@@ -49,6 +49,20 @@ export type SessionSnapshot =
     }
   | { state: "failed"; reason: FailureReason };
 
+/**
+ * Un archivo de Moodle tal como lo ve la interfaz.
+ *
+ * `path` es a la vez el destino en disco y la **identidad** del archivo: es lo
+ * que dice si algo ya se bajó. La `url` viaja **sin el token**; se compone al
+ * lanzar la descarga y no cruza nunca hacia la interfaz.
+ */
+export type FileView = {
+  path: string;
+  name: string;
+  url: string;
+  size: number | null;
+};
+
 export type ModuleView = {
   id: number;
   name: string;
@@ -56,7 +70,11 @@ export type ModuleView = {
   /** `null` si el curso no lleva seguimiento de completado. */
   completed: boolean | null;
   url: string | null;
-  fileCount: number;
+  /** Lo descargable con el token. Vacío en los enlaces a Drive. */
+  files: FileView[];
+  /** Enlaces que el token no abre: Drive, Zoom, formularios. Se cuentan para
+   *  poder decir por qué un módulo no tiene botón de descarga. */
+  externalCount: number;
 };
 
 export type SectionView = {
@@ -65,10 +83,26 @@ export type SectionView = {
   modules: ModuleView[];
 };
 
+/** Un enlace que el token no abre. Se lleva a la interfaz para poder
+ *  exportar el inventario del curso, que es de donde saldrá la Fase 3. */
+export type ExternalLinkView = {
+  url: string;
+  moduleName: string;
+  sectionName: string;
+  kind: string | null;
+};
+
 export type CourseDetail = {
   courseId: number;
   courseName: string;
   sections: SectionView[];
+  /** Todo lo descargable del curso, ya con su ruta de destino. */
+  files: FileView[];
+  links: ExternalLinkView[];
+  /** Los adjuntos de las tareas se piden aparte y pueden fallar solos. Cuando
+   *  fallan se dice, en vez de enseñar un curso al que le faltan archivos sin
+   *  avisar de que faltan. */
+  attachmentsFailed: boolean;
 };
 
 export type CourseGradeRow = {
@@ -87,6 +121,47 @@ export type GradesReport = {
   failedCount: number;
 };
 
+// --------------------------------------------------------------------------
+// Cola de descargas
+// --------------------------------------------------------------------------
+
+/** Lo que la interfaz encola. Sale tal cual del detalle de curso, que es
+ *  donde el service worker ya calculó la ruta de destino. */
+export type QueuedFile = {
+  path: string;
+  name: string;
+  url: string;
+  size: number | null;
+  courseName: string;
+  sectionName: string;
+};
+
+/**
+ * Estado de un archivo en la cola.
+ *
+ * `skipped` no es un fallo: es "esto ya estaba bajado". Se distingue de `done`
+ * a propósito, porque son dos respuestas distintas a la misma pregunta —¿lo
+ * tengo?— y mezclarlas haría que una tanda entera de omitidos pareciera una
+ * descarga que nunca ocurrió.
+ */
+export type QueueStatus = "pending" | "active" | "done" | "skipped" | "failed";
+
+export type QueueItem = QueuedFile & {
+  status: QueueStatus;
+  /** Qué pasó y qué puede hacer el estudiante. `null` mientras no falle. */
+  error: string | null;
+  attempts: number;
+  /** Bytes ya escritos. Solo tiene valor mientras el archivo está activo. */
+  received: number;
+};
+
+export type QueueSnapshot = {
+  items: QueueItem[];
+  paused: boolean;
+  /** Queda trabajo por hacer. La interfaz solo refresca mientras sea cierto. */
+  running: boolean;
+};
+
 export type BackgroundRequest =
   | { type: "session" }
   | { type: "connect" }
@@ -94,7 +169,18 @@ export type BackgroundRequest =
   | { type: "pending" }
   | { type: "courses" }
   | { type: "contents"; courseId: number; courseName: string }
-  | { type: "grades" };
+  | { type: "grades" }
+  | { type: "enqueue"; files: QueuedFile[] }
+  | { type: "queue" }
+  | { type: "pauseQueue" }
+  | { type: "resumeQueue" }
+  | { type: "clearQueue" }
+  | { type: "retryQueue" }
+  /** Cuáles de estas rutas ya están descargadas. Se pregunta una vez por
+   *  pantalla, no en cada refresco: el registro entero son cientos de rutas. */
+  | { type: "stored"; paths: string[] }
+  /** Olvida el registro para volver a bajar lo que ya estaba. */
+  | { type: "forgetStored"; paths: string[] };
 
 export type ResponseMap = {
   session: SessionSnapshot;
@@ -104,6 +190,14 @@ export type ResponseMap = {
   courses: Loaded<CourseSummary[]>;
   contents: Loaded<CourseDetail>;
   grades: Loaded<GradesReport>;
+  enqueue: QueueSnapshot;
+  queue: QueueSnapshot;
+  pauseQueue: QueueSnapshot;
+  resumeQueue: QueueSnapshot;
+  clearQueue: QueueSnapshot;
+  retryQueue: QueueSnapshot;
+  stored: string[];
+  forgetStored: string[];
 };
 
 export type ResponseFor<K extends BackgroundRequest["type"]> = ResponseMap[K];

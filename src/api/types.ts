@@ -169,3 +169,24 @@ export type UserGrades = {
 export type GradeItemsResponse = {
   usergrades: UserGrades[];
 };
+
+// --------------------------------------------------------------------------
+// Tareas · mod_assign_get_assignments
+// --------------------------------------------------------------------------
+
+/**
+ * Solo los adjuntos, que es lo único que esta llamada aporta para archivar.
+ * `cmid` es la clave: es el id con el que la tarea aparece en las secciones
+ * que devuelve `core_course_get_contents`.
+ */
+export type Assignment = {
+  id: number;
+  cmid: number;
+  name?: string;
+  introattachments?: ModuleContent[];
+  introfiles?: ModuleContent[];
+};
+
+export type AssignmentsResponse = {
+  courses?: Array<{ id: number; assignments?: Assignment[] }>;
+};

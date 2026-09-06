@@ -1,5 +1,21 @@
 # Proyecto
 
+## Propósito
+
+**IsilHelper existe para archivar.** El instituto revoca el acceso al cerrar el
+ciclo, y lo que el estudiante no bajó, lo perdió para siempre. Esa es la
+promesa del producto y la vara con la que se mide: **cuántos archivos acaban
+en el disco del estudiante**.
+
+Todo lo demás está al servicio de eso. El dashboard —pendientes, cursos,
+notas, buscador— **no es el producto**: es lo que hace agradable llegar al
+material y decidir qué llevarse. Sin él la herramienta sería peor; sin la
+descarga no sería nada.
+
+La consecuencia práctica, decidida el 6 de septiembre de 2026: **el dashboard
+se congela**. Funciona, se queda, y deja de crecer. Lo que crece es la
+descarga.
+
 ## Problema
 
 1. Descargar material exige abrir un modal, hacer clic, esperar redirección a
@@ -73,15 +89,19 @@ Navegador del estudiante
 
 Mínimos y justificables uno por uno; los revisores de tienda preguntan.
 
+Se conceden **por fase**: un permiso sin función que lo use es una advertencia
+de instalación que no se puede justificar.
+
 ```json
 {
-  "permissions": ["storage", "downloads", "webRequest", "identity"],
-  "host_permissions": [
-    "https://platform.ecala.net/*",
-    "https://www.googleapis.com/*"
-  ]
+  "permissions": ["storage", "webRequest", "downloads"],
+  "host_permissions": ["https://platform.ecala.net/*"]
 }
 ```
+
+`downloads` entró con la Fase 2. `identity` y el host de `googleapis.com`
+entrarán con la Fase 3, y solo si la medición de la Fase 2.5 dice que hacen
+falta.
 
 ---
 
@@ -89,19 +109,22 @@ Mínimos y justificables uno por uno; los revisores de tienda preguntan.
 
 ```
 src/
-├── background/       service worker: auth, cola de descargas
+├── background/       service worker: auth, datos y cola de descargas
 │   ├── auth.ts       captura del token vía onBeforeRedirect
-│   └── downloads.ts
+│   ├── data.ts       carga de las pantallas, donde vive la pausa
+│   └── downloads.ts  la cola: estado en storage, una descarga a la vez
 ├── api/              cliente de Moodle
 │   ├── client.ts     ws(), manejo de 418 y de exception
-│   ├── courses.ts
+│   ├── files.ts      qué se baja con el token y qué es enlace externo
+│   ├── assign.ts     adjuntos del profesor, que get_contents no devuelve
 │   ├── grades.ts
 │   └── types.ts      tipos de las respuestas
 ├── ui/
-│   ├── pages/
+│   ├── pages/        Pendientes · Cursos · Detalle · Notas · Buscar · Descargas
 │   ├── components/
 │   └── theme/        tokens de Suki
 ├── lib/
+│   └── paths.ts      saneado de nombres y ruta de destino
 └── manifest.json
 ```
 
@@ -139,6 +162,11 @@ de datos que todavía no existen.
    está vacío en los 11 cursos y no se sabe si es que el ciclo acaba de empezar
    o si ISIL no lo usa (`domain.md` §9). Sin fuente no hay pantalla, y
    fabricarla con datos inventados sería peor que no tenerla.
+> **Congelada desde el 6 de septiembre de 2026.** Lo que hay funciona y se
+> queda; el dashboard deja de crecer. La retroalimentación sigue sin fuente y
+> ya no espera turno: si el diagnóstico de octubre encuentra el boletín lleno,
+> se replantea entonces.
+
 **El perfil se cayó de la lista**, así que la 1b son dos piezas y no tres.
 `core_user_get_users_by_field` no devuelve código de alumno, ni carrera, ni
 ciclo: el carnet digital que preveía la especificación no se puede construir
@@ -146,19 +174,33 @@ sin inventarse la mitad. Lo poco que aporta —correo institucional y
 `department`— está desde el 5 de septiembre de 2026 en la cabecera de la
 aplicación, que es donde cabía.
 
-> **El orden de ejecución de las fases 2 y 3 está invertido** desde el 5 de
-> septiembre de 2026: primero Drive, después Moodle. Los contenidos T01–T15 y
-> los sílabos son lo que motivó el proyecto y viven en Drive; los
-> complementarios de Moodle son 55 archivos que ya están archivados. Los
-> números de fase se quedan como están para no romper las referencias.
+> **El orden vuelve a la Fase 2 primero**, decidido el 6 de septiembre de
+> 2026. El 5 de septiembre se había invertido para hacer Drive antes, con el
+> argumento de que los contenidos T01–T15 viven allí. El argumento sigue siendo
+> cierto y aun así el orden era el equivocado: la descarga de Moodle **funciona
+> hoy, sin ningún obstáculo pendiente**, y Drive está detrás de una decisión de
+> producto que ni siquiera está tomada. Hacer primero lo que no tiene bloqueos
+> es lo que convierte el propósito en archivos en el disco. Los números de fase
+> se quedan como están para no romper las referencias.
 
-**Fase 2 — Descargas de Moodle.** Individual y masiva de `pluginfile.php`;
-estructura `Curso / Sección / Tema /`; cola con progreso, pausa y reanudación;
-omitir lo ya descargado; exportar `metadata.json`.
+**Fase 2 — Descargas de Moodle. Hecha el 6 de septiembre de 2026.** Botón por
+archivo, por sección y por curso entero; estructura
+`Descargas/IsilHelper/<Curso>/<Sección>/`; cola con progreso, pausa y
+reanudación, que sobrevive a que el service worker se duerma; omitir lo ya
+descargado a partir de un registro propio; e índice del curso en
+`metadata.json`, con la lista de archivos y los enlaces a Drive. Es el
+equivalente en extensión de `isil_download.py`. Añade el permiso `downloads`.
 
-**Fase 3 — Drive.** OAuth por `launchWebAuthFlow`; resolución de enlaces
-ambiguos; listado recursivo y descarga por `alt=media`; exportación de
-documentos nativos; control de rate limiting.
+**Fase 2.5 — Medir la descarga de Drive por sesión.** Antes de comprometerse
+con el muro del OAuth hay que saber si `chrome.downloads` puede bajar de Drive
+con la sesión de Google que el estudiante ya tiene en el navegador. Si puede,
+el muro desaparece para los archivos con enlace directo y el OAuth queda solo
+para *enumerar* carpetas. El protocolo está en `context/fase-3.md` §8.
+
+**Fase 3 — Drive.** Según el resultado de la medición. Si sale mal: OAuth por
+`launchWebAuthFlow` con `client_id` propio de cada estudiante, resolución de
+enlaces ambiguos, listado recursivo y descarga por `alt=media`, exportación de
+documentos nativos y control de rate limiting.
 
 **Fase 4 — Distribución.** Firefox AMO (gratis) y Chrome Web Store (5 USD pago
 único); README con advertencias; política de privacidad.
