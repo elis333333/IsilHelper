@@ -348,3 +348,26 @@
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
+
+/* ---------- Problemas de la exploración de Drive ----------
+   Se enseñan también cuando la descarga va bien: una lista corta que parece
+   completa es peor que un error a la vista. */
+.problema {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.problema__donde {
+  flex: 0 0 auto;
+  color: var(--color-heading);
+  font-weight: var(--weight-medium);
+}
+.problema__causa {
+  flex: 1 1 320px;
+  min-width: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+}

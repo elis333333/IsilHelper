@@ -95,13 +95,16 @@ de instalación que no se puede justificar.
 ```json
 {
   "permissions": ["storage", "webRequest", "downloads"],
-  "host_permissions": ["https://platform.ecala.net/*"]
+  "host_permissions": [
+    "https://platform.ecala.net/*",
+    "https://drive.google.com/*"
+  ]
 }
 ```
 
-`downloads` entró con la Fase 2. `identity` y el host de `googleapis.com`
-entrarán con la Fase 3, y solo si la medición de la Fase 2.5 dice que hacen
-falta.
+`downloads` entró con la Fase 2 y `drive.google.com` con la Fase 3. **`identity`
+y `googleapis.com` no entraron**: la medición dijo que no hacen falta, porque
+todo funciona con la sesión del navegador.
 
 ---
 
@@ -197,10 +200,19 @@ con la sesión de Google que el estudiante ya tiene en el navegador. Si puede,
 el muro desaparece para los archivos con enlace directo y el OAuth queda solo
 para *enumerar* carpetas. El protocolo está en `context/fase-3.md` §8.
 
-**Fase 3 — Drive.** Según el resultado de la medición. Si sale mal: OAuth por
-`launchWebAuthFlow` con `client_id` propio de cada estudiante, resolución de
-enlaces ambiguos, listado recursivo y descarga por `alt=media`, exportación de
-documentos nativos y control de rate limiting.
+**Fase 3 — Drive. Hecha el 6 de septiembre de 2026, y sin OAuth.** Las dos
+mediciones salieron bien: enumerar carpetas y descargar archivos funcionan con
+la sesión de Google que el navegador ya tiene. **El `client_id` no existe en
+este proyecto** y ningún estudiante toca la consola de Google Cloud.
+
+Enumeración por `embeddedfolderview`, recorrido de subcarpetas, exportación de
+documentos nativos, y estructura `Curso / Sección / Tema /` con el árbol de
+Drive debajo. La descarga reutiliza la cola de la Fase 2. Añade un solo
+permiso, `drive.google.com`, y solo para leer las carpetas.
+
+Leer el HTML de Drive es scraping y puede romperse: la vía va con rotura
+legible en las tres capas y con la API por OAuth documentada como respaldo
+(`fase-3.md` §8d y §11).
 
 **Fase 4 — Distribución.** Firefox AMO (gratis) y Chrome Web Store (5 USD pago
 único); README con advertencias; política de privacidad.

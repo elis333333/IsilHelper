@@ -101,26 +101,25 @@ poder darla por cerrada. Qué mirar, en orden:
 Empezar por **un curso**, no por los once: es la regla de siempre, probar con
 límite antes de correr sobre todo.
 
-**2 · La Fase 3 ya no tiene muro.** Las dos mitades están medidas, validadas
-contra el caso real y con el parser escrito:
+**2 · Correr la Fase 3 contra la cuenta real.** Está escrita entera y en verde,
+y **sin OAuth**: enumerar y descargar funcionan con la sesión de Google del
+navegador, así que el `client_id` no existe en este proyecto y ningún
+estudiante toca la consola de Google Cloud.
 
-- **Descargar** con la sesión del navegador: 118 055 bytes que coinciden con lo
-  que Drive declara.
-- **Enumerar** por `embeddedfolderview`, validado sobre una carpeta de
-  «Compartidos conmigo» con la cuenta institucional, que es como el instituto
-  comparte el material.
+Qué mirar, y otra vez **empezando por un solo curso**:
 
-**El `client_id` desaparece del proyecto.** Ningún estudiante toca la consola
-de Google Cloud, y el OAuth queda como respaldo documentado y sin implementar
-(`fase-3.md` §8d).
+- Que los temas caigan en `Contenidos/<Tema>/`, con las subcarpetas de Drive
+  reproducidas debajo.
+- Que los documentos nativos —Docs, Sheets, Slides— se exporten y **abran**.
+  Son la parte con menos respaldo experimental: las rutas de exportación
+  siguen sin medirse de forma aislada (`fase-3.md` §8c).
+- Que las carpetas que no se puedan leer salgan en la lista con su motivo, en
+  vez de desaparecer. Es la condición que sostiene toda la vía.
+- Que un segundo *Descargar* diga «ya lo tienes».
 
-Lo que queda por medir son los dos límites conocidos, y ninguno bloquea:
-**las rutas de exportación de los documentos nativos** y **que una subcarpeta
-se enumere igual que la de arriba**. Los dos se miden con las sondas que ya
-existen (`fase-3.md` §8c).
-
-Después de eso, la Fase 3 es escribir el recorrido recursivo y reutilizar la
-cola de la Fase 2, que ya sabe bajar de una URL cualquiera.
+**3 · Medir lo que queda de Drive** (`fase-3.md` §8c): las rutas de exportación
+de los nativos y una subcarpeta suelta. Ninguno bloquea, pero los dos son
+supuestos que el código ya da por buenos.
 
 Y más adelante, **repetir el diagnóstico a partir del 6 de octubre de 2026**
 —desde la rama `diagnostico-temporal`—, con un mes de ciclo encima. Solo
@@ -393,6 +392,11 @@ detalle completo está en `domain.md` §2.
 | Cero entradas se informa como rotura, no como carpeta vacía | El día que Drive cambie el HTML sin quitar el contenedor, todas las carpetas parecerían vacías y el estudiante concluiría que no tiene material |
 | El ancla del parser es `class="flip-entry"`, no el `id` del div | El identificador bueno está en el `href`, que es además el que se usa para bajar. Fiarse de dos sitios para el mismo dato sobra, y el atributo `id` no se usa para nada más |
 | El mime del icono es respaldo, no confirmación | Confirmar obliga a escribir una rama de «¿y si discrepan?» y a decidir cuál gana, sin ningún dato sobre cuándo ocurre. Como respaldo no toca el camino normal y salva la clasificación el día que cambien las URLs |
+| La Fase 3 no lleva OAuth ni `client_id` | Las dos mediciones salieron bien: enumerar y descargar funcionan con la sesión de Google. El muro que dejaba fuera a la mayoría desaparece |
+| El campo `source` de cada archivo de la cola | Decide cómo se autentica: Moodle lleva el token pegado, Drive va con la sesión de Google. Pegarle el token de Moodle a una URL de Google sería filtrárselo a un tercero |
+| Explorar y encolar son dos pasos | El recorrido tarda y puede salir a medias. Un botón único que bajara lo que pudiera dejaría la sensación de haberlo archivado todo, que es la peor forma de fallar aquí |
+| El recorrido va en anchura | Si se alcanza un tope, lo que falta son las ramas más hondas y no media carpeta de primer nivel: más fácil de explicar y de reanudar |
+| Un tipo desconocido no se encola | Bajarlo por la ruta de binario podría traer una página en vez del archivo y ensuciar el destino |
 
 ---
 
@@ -409,9 +413,12 @@ detalle completo está en `domain.md` §2.
 - [x] ~~**Validar la enumeración con la cuenta institucional**~~ sobre
       «Compartidos conmigo». Hecho: responde igual, sin pedir login
 - [x] ~~**Guardar el HTML real como fixture**~~, anonimizado
+- [ ] **Correr la Fase 3 contra la cuenta real.** Escrita y en verde, sin bajar
+      todavía un solo archivo de Drive de verdad
 - [ ] **Medir las rutas de exportación de los nativos** y **que una subcarpeta
-      se enumere igual** (`fase-3.md` §8c). Son los dos límites conocidos que
-      quedan, y ninguno bloquea
+      se enumere igual** (`fase-3.md` §8c). El código ya las da por buenas
+- [ ] **Capturar un fixture limpio** de `embeddedfolderview` con la sonda ya
+      corregida, y guardarlo junto al corrompido
 - [ ] **Medir las subcarpetas y los documentos nativos** (`fase-3.md` §8c), que
       son los dos límites conocidos de la vía por defecto
 - [ ] Iconografía de tienda (16/32/48/128 px)
@@ -599,3 +606,28 @@ disparar**, porque usaba el mismo patrón que la sustitución: se cambió por un
 recuento de lo sustituido y un aviso de lo que no sabe detectar, que son los
 nombres de personas de `flip-entry-last-writer`. 160 tests. Commiteado todo lo
 pendiente: la Fase 2 y el parser llevaban demasiado tiempo sin versionar.
+
+**2026-09-06 · 18:05** — **Fase 3 implementada, y sin OAuth.** Enumerar y
+descargar salen los dos con la sesión de Google del navegador, así que el
+`client_id` no existe en el proyecto y ningún estudiante toca la consola de
+Google Cloud. El permiso nuevo es uno solo, `drive.google.com`, y solo para
+leer las carpetas: bajar los archivos no necesita ninguno.
+
+La descarga **reutiliza la cola de la Fase 2 entera**. Lo único que se añadió
+es el campo `source`, que decide cómo se autentica cada archivo, y no es
+cosmético: pegarle el token de Moodle a una URL de Google sería filtrárselo a
+un tercero. De paso salió que el mensaje de «devolvió HTML» decía «vuelve a
+conectar tu cuenta», que es cierto para Moodle y falso para Drive, donde
+significa sesión de Google o página de confirmación de antivirus; ahora depende
+del origen.
+
+Explorar y encolar quedaron como dos pasos y no uno: el recorrido tarda y puede
+salir a medias, y un botón único dejaría la sensación de haberlo archivado
+todo. La rotura legible vive en las tres capas —el parser devuelve `shape`, el
+recorrido devuelve `problems[]` con la ruta y la causa de cada carpeta que
+falló, y la pantalla los enseña **aunque la descarga vaya bien**—. El recorrido
+va en anchura, lleva cuenta de las carpetas visitadas porque los atajos de
+Drive permiten ciclos, y avisa cuando para por un tope. 181 tests.
+
+Queda correrlo contra la cuenta real, que es lo único que falta, y capturar el
+fixture limpio de `embeddedfolderview` con la sonda ya corregida.

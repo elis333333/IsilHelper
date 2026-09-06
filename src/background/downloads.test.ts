@@ -34,6 +34,7 @@ function file(path: string, url = "https://platform.ecala.net/webservice/pluginf
     size: 1024,
     courseName: "Base de Datos II",
     sectionName: "Complementario",
+    source: "moodle",
   };
 }
 

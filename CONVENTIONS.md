@@ -35,8 +35,12 @@
   Usar marcadores: `<TOKEN>`, `1AbCdEf...`.
 - La UI jamás muestra el token completo.
 - Nada de telemetría, analytics ni llamadas a dominios fuera de
-  `platform.ecala.net` y `googleapis.com`. Añadir un dominio a
+  `platform.ecala.net` y `drive.google.com`. Añadir un dominio a
   `host_permissions` es una decisión de diseño, no un detalle.
+- **El token de Moodle solo viaja a `platform.ecala.net`.** Las descargas de
+  Drive van con la sesión de Google y sin token: pegárselo a una URL de Google
+  sería filtrárselo a un tercero. Lo decide el campo `source` de cada archivo
+  de la cola.
 
 ## Red
 

@@ -7,7 +7,13 @@ import pkg from "./package.json" with { type: "json" };
 //
 //   Fase 0  storage, webRequest, host platform.ecala.net
 //   Fase 2  + downloads                       ← concedido: la cola ya existe
-//   Fase 3  + identity, host www.googleapis.com
+//   Fase 3  + host drive.google.com           ← concedido: enumerar carpetas
+//
+// La Fase 3 NO pide `identity` ni `googleapis.com`: no hay OAuth. Enumerar y
+// descargar funcionan con la sesión de Google del navegador (`fase-3.md` §8).
+// El único permiso que hace falta es leer drive.google.com desde el service
+// worker, porque ese `fetch` es cross-origin y sin él CORS bloquea la lectura.
+// Bajar los archivos no necesita permiso: `chrome.downloads` no lo exige.
 export default defineManifest({
   manifest_version: 3,
   name: "IsilHelper",
@@ -27,5 +33,5 @@ export default defineManifest({
   },
 
   permissions: ["storage", "webRequest", "downloads"],
-  host_permissions: ["https://platform.ecala.net/*"],
+  host_permissions: ["https://platform.ecala.net/*", "https://drive.google.com/*"],
 });

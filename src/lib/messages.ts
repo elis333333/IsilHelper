@@ -125,6 +125,17 @@ export type GradesReport = {
 // Cola de descargas
 // --------------------------------------------------------------------------
 
+/**
+ * De dónde sale el archivo, que decide **cómo se autentica la descarga**:
+ *
+ * - `moodle`: la URL es un `pluginfile.php` y necesita el token pegado
+ *   (`domain.md` §4).
+ * - `drive`: la URL ya está lista y se baja con la sesión de Google del
+ *   navegador. Pegarle el token de Moodle no solo no serviría: lo mandaría a
+ *   un tercero, que es exactamente lo que la regla 4 impide.
+ */
+export type FileSource = "moodle" | "drive";
+
 /** Lo que la interfaz encola. Sale tal cual del detalle de curso, que es
  *  donde el service worker ya calculó la ruta de destino. */
 export type QueuedFile = {
@@ -134,6 +145,7 @@ export type QueuedFile = {
   size: number | null;
   courseName: string;
   sectionName: string;
+  source: FileSource;
 };
 
 /**
@@ -162,6 +174,26 @@ export type QueueSnapshot = {
   running: boolean;
 };
 
+// --------------------------------------------------------------------------
+// Drive
+// --------------------------------------------------------------------------
+
+/** Algo que no se pudo leer al explorar Drive. Se enseña **aunque la descarga
+ *  vaya bien**: una lista corta que parece completa es peor que un error. */
+export type DriveProblemView = {
+  /** Dónde pasó, en lenguaje del estudiante: `T01 - Introducción / Anexos`. */
+  where: string;
+  detail: string;
+};
+
+export type DriveExploration = {
+  files: QueuedFile[];
+  problems: DriveProblemView[];
+  /** Se alcanzó un tope del recorrido, así que **puede faltar material**. */
+  truncated: boolean;
+  foldersRead: number;
+};
+
 export type BackgroundRequest =
   | { type: "session" }
   | { type: "connect" }
@@ -180,7 +212,11 @@ export type BackgroundRequest =
    *  pantalla, no en cada refresco: el registro entero son cientos de rutas. */
   | { type: "stored"; paths: string[] }
   /** Olvida el registro para volver a bajar lo que ya estaba. */
-  | { type: "forgetStored"; paths: string[] };
+  | { type: "forgetStored"; paths: string[] }
+  /** Explora los enlaces de Drive de un curso. No encola: solo mira, porque
+   *  con un recorrido que puede tardar minutos conviene enseñar antes qué se
+   *  encontró y qué no se pudo leer. */
+  | { type: "exploreDrive"; courseId: number; courseName: string };
 
 export type ResponseMap = {
   session: SessionSnapshot;
@@ -198,6 +234,7 @@ export type ResponseMap = {
   retryQueue: QueueSnapshot;
   stored: string[];
   forgetStored: string[];
+  exploreDrive: Loaded<DriveExploration>;
 };
 
 export type ResponseFor<K extends BackgroundRequest["type"]> = ResponseMap[K];

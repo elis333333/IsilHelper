@@ -22,3 +22,8 @@ export const WAF_BACKOFF_MS = 5_000;
 
 /** Espera tras un fallo de red, creciente: 3 s, 6 s, 9 s. */
 export const NETWORK_BACKOFF_MS = 3_000;
+
+/** Pausa entre peticiones a Drive. Google no tiene el WAF de la plataforma,
+ *  pero una carpeta con veinte subcarpetas son veinte peticiones y en ráfaga
+ *  es como se consigue que empiece a mirar. */
+export const DRIVE_PAUSE_MS = 400;

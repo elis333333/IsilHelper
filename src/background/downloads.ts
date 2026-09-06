@@ -48,7 +48,7 @@ import {
   type QueueState,
 } from "../lib/storage";
 import { PAUSE_MS } from "../lib/constants";
-import type { QueuedFile, QueueSnapshot } from "../lib/messages";
+import type { FileSource, QueuedFile, QueueSnapshot } from "../lib/messages";
 
 /** Reintentos por archivo ante un fallo del servidor. El WAF se quita solo si
  *  se le deja respirar, así que la espera crece con cada intento. */
@@ -76,6 +76,14 @@ function serialize<T>(task: () => Promise<T>): Promise<T> {
   const turn = chain.then(task, task);
   chain = turn.catch(() => undefined);
   return turn;
+}
+
+/** Pega el token a un `fileurl` de la plataforma. Vive aquí y no en la cola
+ *  guardada: el token no se escribe en disco ni viaja a la interfaz. */
+function withToken(url: string, token: string | null): string {
+  if (token === null) return url;
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}token=${encodeURIComponent(token)}`;
 }
 
 function isFinished(item: QueueEntry): boolean {
@@ -134,20 +142,34 @@ type Outcome =
   | { kind: "retry" }
   | { kind: "failed"; message: string };
 
-async function judge(downloadId: number, attempts: number): Promise<Outcome | null> {
+/**
+ * Un archivo que llega como HTML no es el archivo, y lo que significa depende
+ * de quién lo mandó. Decirle a un estudiante que reconecte su cuenta de Moodle
+ * cuando lo que falta es la sesión de Google es mandarlo a arreglar lo que no
+ * está roto.
+ */
+function explainHtml(source: FileSource): string {
+  return source === "drive"
+    ? "Google devolvió una página en vez del archivo. Puede que no tengas sesión de Google en este navegador, o que el archivo sea grande y Drive esté pidiendo confirmación."
+    : "La plataforma devolvió una página en vez del archivo. Vuelve a conectar tu cuenta.";
+}
+
+async function judge(
+  downloadId: number,
+  attempts: number,
+  source: FileSource,
+): Promise<Outcome | null> {
   const [download] = await chrome.downloads.search({ id: downloadId });
   if (download === undefined) return { kind: "failed", message: explain(undefined) };
   if (download.state === "in_progress") return null;
 
   if (download.state === "complete") {
     // Moodle devuelve la página de login con estado 200 cuando el token no
-    // llega. Sin esta comprobación se guarda HTML con nombre de PDF.
+    // llega, y Drive la de confirmación de antivirus. Sin esta comprobación se
+    // guarda HTML con nombre de PDF.
     if (download.mime.startsWith("text/html")) {
       await chrome.downloads.removeFile(downloadId).catch(() => undefined);
-      return {
-        kind: "failed",
-        message: "La plataforma devolvió una página en vez del archivo. Vuelve a conectar tu cuenta.",
-      };
+      return { kind: "failed", message: explainHtml(source) };
     }
     return { kind: "done", received: download.bytesReceived };
   }
@@ -169,7 +191,7 @@ async function settle(downloadId: number): Promise<boolean> {
   const item = state.items.find((candidate) => candidate.downloadId === downloadId);
   if (item === undefined || item.status !== "active") return false;
 
-  const outcome = await judge(downloadId, item.attempts);
+  const outcome = await judge(downloadId, item.attempts, item.source);
   if (outcome === null) return false;
 
   if (outcome.kind === "retry") await sleep(RETRY_BACKOFF_MS * item.attempts);
@@ -243,8 +265,10 @@ async function pump(): Promise<void> {
   const next = await claimNext();
   if (next === null) return;
 
+  // Drive no necesita el token de Moodle, así que una descarga de Drive no
+  // debe fallar por no haberlo.
   const token = await readToken();
-  if (token === null) {
+  if (token === null && next.source !== "drive") {
     await fail(next.path, "No hay sesión conectada. Conecta tu cuenta y vuelve a intentarlo.");
     return;
   }
@@ -255,10 +279,11 @@ async function pump(): Promise<void> {
   if (waited < PAUSE_MS) await sleep(PAUSE_MS - waited);
   lastLaunchAt = Date.now();
 
-  // El token se pega ahora y no se guarda. Los `fileurl` de la API lo
-  // necesitan como parámetro (`domain.md` §4).
-  const separator = next.url.includes("?") ? "&" : "?";
-  const url = `${next.url}${separator}token=${encodeURIComponent(token)}`;
+  // El token se pega ahora y no se guarda. Solo a lo de Moodle: los
+  // `fileurl` de la plataforma lo necesitan como parámetro (`domain.md` §4),
+  // mientras que Drive se autentica con la sesión de Google del navegador.
+  // Mandarle el token de Moodle a Google sería filtrárselo a un tercero.
+  const url = next.source === "drive" ? next.url : withToken(next.url, token);
 
   let downloadId: number;
   try {

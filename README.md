@@ -23,6 +23,7 @@ cómodo.
 | | |
 |---|---|
 | **Descargas** | Archivo suelto, sección entera o el curso completo. Cola con progreso, pausa y reanudación; salta lo que ya bajaste |
+| **Google Drive** | Los temas y el sílabo viven en Drive: la extensión abre las carpetas, baja lo que hay dentro y entra en las subcarpetas. Sin configurar nada |
 | **Índice del curso** | Un `metadata.json` junto al material, con la lista de archivos y los enlaces externos del curso |
 | **Pendientes** | Las entregas de los once cursos en una sola lista por fecha, no una pestaña por curso |
 | **Cursos** | Tu avance de un vistazo, y el contenido de cada uno |
@@ -41,17 +42,31 @@ Descargas/
         │   └── Semana 3/          ← cuando un módulo trae varios archivos
         │       ├── practica.pdf
         │       └── datos.sql
-        └── Evaluaciones/
-            └── TA1/
-                └── enunciado.pdf
+        ├── Evaluaciones/
+        │   └── TA1/
+        │       └── enunciado.pdf
+        └── Contenidos/
+            └── T01 - Introducción/   ← el tema, tal como se llama en el curso
+                ├── silabo.pdf
+                └── Semana 3/         ← y debajo, las carpetas de Drive
+                    └── lectura.pdf
 ```
+
+### Sobre Drive
+
+Los contenidos T01–T15 y los sílabos son enlaces a carpetas de Google Drive, y
+son lo que motivó el proyecto. La extensión los baja **con tu sesión de
+Google**, la que ya tienes abierta en el navegador: no hay que crear ninguna
+credencial ni pasar por la consola de Google Cloud.
+
+A cambio, esa vía es frágil: la extensión lee la página que Drive usa para
+incrustar carpetas, y Google puede cambiarla sin avisar. Si eso pasa, **te lo
+dice** —no te enseña una carpeta vacía— y habrá que actualizar la extensión.
+Cuando una carpeta no se puede leer, aparece en la lista con el motivo, para
+que puedas ir a buscarla a mano mientras todavía tienes acceso.
 
 ### Qué no hace, y por qué
 
-- **No baja el material de Google Drive todavía.** Los contenidos T01–T15 y los
-  sílabos son enlaces a Drive, y bajarlos necesita permisos de Google que
-  todavía se están evaluando. Mientras tanto, el índice del curso te deja la
-  lista de enlaces a mano.
 - **No baja las clases grabadas de Zoom.** Dos en todo un ciclo, y muy frágil.
 - **No escribe nada en la plataforma.** No entrega tareas, no marca completado,
   no responde en foros. Solo lee.
@@ -82,9 +97,12 @@ desarrollador** → *Cargar sin empaquetar* → elige la carpeta `dist/`.
 1. Entra a `platform.ecala.net` y termina de iniciar sesión como siempre.
 2. Pulsa el icono de IsilHelper y luego **Conectar**.
 3. Entra a un curso y pulsa **Descargar todo el curso**.
+4. Para los temas y el sílabo, pulsa **Ver qué hay en Drive** y luego
+   **Descargar**. Necesitas tener tu sesión de Google abierta en el mismo
+   navegador.
 
-La conexión se hace una sola vez. Después funciona aunque cierres la sesión en
-la plataforma.
+La conexión con la plataforma se hace una sola vez, y después funciona aunque
+cierres la sesión allí. La de Google es la que ya usas para abrir el material.
 
 ---
 
@@ -92,12 +110,15 @@ la plataforma.
 
 **No hay servidor.** Ni base de datos, ni servicio intermedio, ni estadísticas
 de uso. Todo ocurre dentro de tu navegador, y las únicas peticiones que salen
-van a `platform.ecala.net`. El código está abierto para que cualquiera lo
-verifique.
+van a **la plataforma del instituto y a Google Drive**, que son los dos sitios
+donde está tu material. A ningún otro sitio, y menos a uno mío. El código está
+abierto para que cualquiera lo verifique.
 
-- **No se te pide usuario ni contraseña, nunca.** IsilHelper reutiliza la
-  sesión que tu navegador ya tiene con la plataforma. Cualquier extensión o
-  página que te pida tus credenciales de ISIL no es esta.
+- **No se te pide usuario ni contraseña, nunca.** Ni de ISIL ni de Google.
+  IsilHelper reutiliza las sesiones que tu navegador ya tiene abiertas.
+  Cualquier extensión o página que te pida esas credenciales no es esta.
+- **Tampoco se te pide crear credenciales de Google.** Nada de consolas ni de
+  claves: si alguna guía te manda hacer eso para bajar de Drive, no es esta.
 - **La credencial de acceso no se muestra ni se registra**, ni en pantalla, ni
   en los mensajes de error, ni en el historial de descargas del navegador.
 - **Los archivos son tuyos y se quedan en tu disco**, en carpetas normales que

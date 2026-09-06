@@ -2,9 +2,9 @@ import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ask } from "../lib/messaging";
 import { exportInventory } from "../lib/inventory";
-import { plural } from "../lib/format";
 import { SectionBlock } from "../components/SectionBlock";
 import { DownloadAction } from "../components/DownloadAction";
+import { DrivePanel } from "../components/DrivePanel";
 import { FailureNotice } from "../components/FailureNotice";
 import { Loading, Notice } from "../components/Notice";
 import { useNavigation } from "../store/navigation";
@@ -107,6 +107,10 @@ export default function CourseDetail({ courseId, courseName }: Props) {
             <CourseActions detail={detail} />
           )}
 
+          {/* Drive va antes que el material de Moodle: los temas y el sílabo
+              son lo que motivó el proyecto, y son lo que vive allí. */}
+          <DrivePanel detail={detail} />
+
           {detail.attachmentsFailed && (
             <Notice
               tone="warning"
@@ -128,16 +132,13 @@ export default function CourseDetail({ courseId, courseName }: Props) {
             />
           ) : (
             <>
-              {detail.files.length === 0 && (
+              {detail.files.length === 0 && detail.links.length === 0 && (
                 <Notice
                   symbol="·"
-                  title="Aquí no hay nada que se pueda descargar todavía"
-                  detail={`El curso tiene ${plural(
-                    detail.links.length,
-                    "enlace externo",
-                    "enlaces externos",
-                  )}, casi siempre a Google Drive, y esos aún no se bajan desde la extensión.`}
-                  hint="Guarda el índice del curso para tener la lista de enlaces a mano."
+                  title="Aquí no hay nada que descargar todavía"
+                  detail="El curso cargó bien, pero no tiene archivos en la plataforma ni
+                          enlaces a Drive."
+                  hint="Puede que el profesor aún no haya publicado material."
                 />
               )}
               {detail.sections.map((section) => (

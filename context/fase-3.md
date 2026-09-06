@@ -465,6 +465,78 @@ contenido de `.env`.
 4. Medir las rutas de exportación de los nativos y una subcarpeta (§8c.1 y 2).
    Son los dos límites conocidos que quedan.
 5. **Abrir contenidos en pestañas.** No depende de nada de lo anterior.
-6. El recorrido recursivo y la descarga de Drive, sobre el parser que ya
-   existe. El respaldo por OAuth (§8d) queda documentado y sin implementar
-   hasta que haga falta.
+6. ~~El recorrido recursivo y la descarga de Drive~~, sobre el parser que ya
+   existe. **Hecho** (§11). El respaldo por OAuth (§8d) queda documentado y sin
+   implementar hasta que haga falta.
+7. Correr la Fase 3 contra la cuenta real, que es lo único que falta.
+
+## 11. Implementada — 6 de septiembre de 2026
+
+Escrita sobre las dos mediciones, y **sin OAuth, sin `client_id` y sin que
+ningún estudiante toque la consola de Google**.
+
+| Pieza | Qué hace |
+|---|---|
+| `src/api/drive.ts` | Único punto de red hacia Drive. Pausa serializada de 400 ms y timeout, como `client.ts` con Moodle |
+| `src/api/drive-walk.ts` | Recorrido de carpetas y subcarpetas. Puro: recibe el lector como argumento, 13 tests sin red |
+| `src/background/drive.ts` | Une el recorrido con la cola: de enlace de Moodle a archivos encolables |
+| `src/ui/components/DrivePanel.tsx` | Explorar y encolar, en dos pasos |
+
+**La descarga reutiliza la cola de la Fase 2 entera.** Lo único que se añadió
+es el campo `source` de cada archivo, que decide cómo se autentica: `moodle`
+lleva el token pegado, `drive` va con la sesión de Google. Progreso, pausa,
+reanudación, saltar lo ya bajado y borrar la entrada del historial funcionan
+igual sin tocar nada.
+
+Ese campo no es cosmético: **pegarle el token de Moodle a una URL de Google
+sería filtrárselo a un tercero**, que es justo lo que la regla 4 impide.
+
+### Decisiones
+
+- **Explorar y encolar son dos pasos, no uno.** El recorrido puede tardar
+  minutos y puede salir a medias. Un botón único que bajara lo que pudiera
+  dejaría la sensación de haberlo archivado todo, que es la peor forma de
+  fallar en una herramienta cuyo propósito es no perder material.
+- **En anchura y no en profundidad.** Si se alcanza un tope, lo que falta son
+  las ramas más hondas y no media carpeta de primer nivel: es más fácil de
+  explicar y de reanudar.
+- **Los topes son `maxDepth: 8` y `maxFolders: 120`**, holgados para un ciclo
+  —el inventario son 166 carpetas repartidas entre once cursos— y ahí para que
+  un árbol enorme no se coma la tanda entera sin avisar.
+- **Se llevan cuenta de las carpetas visitadas.** Drive permite atajos, así que
+  un árbol puede tener ciclos; sin eso, un atajo a una carpeta antecesora deja
+  el recorrido dando vueltas.
+- **Un tipo desconocido no se encola.** Bajarlo por la ruta de binario podría
+  traer una página en vez del archivo y ensuciar el destino.
+- **Los documentos nativos llevan extensión puesta.** Un Google Doc se llama
+  «Apuntes» y se exporta a PDF; sin el `.pdf` no abre con doble clic.
+- **El mensaje de «devolvió HTML» depende del origen.** En Moodle significa que
+  el token no llegó; en Drive, que falta sesión de Google o que Drive está
+  pidiendo confirmación por ser un archivo grande. Decirle a alguien que
+  reconecte su cuenta del instituto cuando lo que falta es la de Google es
+  mandarlo a arreglar lo que no está roto.
+
+### La rotura legible, en las tres capas
+
+Es la condición que sostiene toda esta vía, así que no vive en un solo sitio:
+
+1. **`drive-folder.ts`** devuelve `reason: "shape"` en vez de una lista vacía.
+2. **`drive-walk.ts`** devuelve `problems[]` con cada carpeta que no se pudo
+   leer, su ruta y su causa, y `truncated` cuando paró antes de tiempo. Una
+   carpeta que falla **no se omite**: el recorrido sigue y la cuenta.
+3. **`DrivePanel.tsx`** los enseña **aunque la descarga vaya bien**. Si dos
+   carpetas no se pudieron leer, saberlo hoy es lo que permite ir a buscarlas a
+   mano mientras todavía queda acceso.
+
+### El permiso
+
+Uno solo, y no los dos que preveía la especificación:
+
+```json
+"host_permissions": ["https://platform.ecala.net/*", "https://drive.google.com/*"]
+```
+
+**No entra `identity` ni `googleapis.com`**, porque no hay OAuth. Y
+`drive.google.com` hace falta **solo para enumerar**: ese `fetch` desde el
+service worker es cross-origin y sin permiso CORS bloquea la lectura. Bajar los
+archivos no necesita permiso ninguno.

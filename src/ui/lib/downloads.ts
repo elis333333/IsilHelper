@@ -89,7 +89,9 @@ export function toQueued(
   courseName: string,
   sectionName: string,
 ): QueuedFile[] {
-  return files.map((file) => ({ ...file, courseName, sectionName }));
+  // Todo lo que sale del detalle de curso es de Moodle: los enlaces a Drive no
+  // llegan aquí como archivos, sino que se exploran aparte.
+  return files.map((file) => ({ ...file, courseName, sectionName, source: "moodle" as const }));
 }
 
 /** Cuenta por estado, para los resúmenes de la pantalla de descargas. */

@@ -21,6 +21,8 @@ import {
   retryQueue,
   storedAmong,
 } from "./downloads";
+import { exploreCourseDrive } from "./drive";
+import { driveLinksOf } from "./data";
 import type { BackgroundRequest, ResponseMap } from "../lib/messages";
 
 registerTokenCapture();
@@ -70,7 +72,20 @@ function handle(
       return storedAmong(request.paths);
     case "forgetStored":
       return forgetPaths(request.paths);
+    case "exploreDrive":
+      return exploreDrive(request.courseId, request.courseName);
   }
+}
+
+/** Explorar necesita los enlaces del curso, así que se piden primero. Van por
+ *  la misma ruta que el detalle de curso y no por una nueva. */
+async function exploreDrive(
+  courseId: number,
+  courseName: string,
+): Promise<ResponseMap["exploreDrive"]> {
+  const links = await driveLinksOf(courseId, courseName);
+  if (links.state !== "ok") return links;
+  return { state: "ok", value: await exploreCourseDrive(courseName, links.value) };
 }
 
 chrome.runtime.onMessage.addListener(

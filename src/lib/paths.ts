@@ -115,3 +115,37 @@ export function downloadPath(parts: PathParts): string {
     sanitizeFilename(parts.filename),
   ].join("/");
 }
+
+export type DrivePathParts = {
+  courseName: string;
+  sectionName: string;
+  /** El módulo de Moodle que enlaza a Drive: `T01 - Introducción`. Es el
+   *  "Tema" de la estructura `Curso / Sección / Tema /`. */
+  moduleName: string;
+  /** Las subcarpetas de Drive por debajo del módulo, de fuera hacia dentro.
+   *  Vacío para lo que cuelga directamente de la carpeta enlazada. */
+  trail: string[];
+  filename: string;
+};
+
+/**
+ * Ruta de destino de un archivo que vive en Drive.
+ *
+ *     Descargas/IsilHelper/<Curso>/<Sección>/<Tema>/<subcarpetas…>/<archivo>
+ *
+ * Se separa de `downloadPath` en vez de añadirle un parámetro porque son dos
+ * formas distintas: en Moodle el módulo solo aparece cuando trae más de un
+ * archivo, y aquí **el módulo siempre está**, porque es el nombre con el que
+ * el estudiante reconoce el tema. Debajo se reproduce el árbol propio de
+ * Drive, que es la única pista que tiene de cómo lo organizó el profesor.
+ */
+export function drivePath(parts: DrivePathParts): string {
+  return [
+    ROOT,
+    sanitizeSegment(parts.courseName),
+    sanitizeSegment(parts.sectionName),
+    sanitizeSegment(parts.moduleName),
+    ...parts.trail.map(sanitizeSegment),
+    sanitizeFilename(parts.filename),
+  ].join("/");
+}

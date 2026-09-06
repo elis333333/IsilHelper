@@ -8,6 +8,8 @@ import { getActionEventsPaged } from "../api/calendar";
 import { getAssignmentAttachments, type AttachmentsByModule } from "../api/assign";
 import { getCourseContents } from "../api/contents";
 import { collectCourseFiles, type CourseFile } from "../api/files";
+import { classifyDriveUrl } from "../api/drive-links";
+import type { DriveLinkInput } from "./drive";
 import { getGradeItems } from "../api/grades";
 import { getUserCourses } from "../api/site";
 import { courseGrade, overallAverage } from "../api/average";
@@ -222,4 +224,30 @@ export async function loadGrades(): Promise<Loaded<GradesReport>> {
       failedCount: rows.filter((row) => row.failed).length,
     },
   };
+}
+
+/**
+ * Los enlaces de Drive de un curso, listos para explorar.
+ *
+ * Sale del mismo `core_course_get_contents` que el detalle de curso, así que
+ * no añade ninguna forma nueva de leer la plataforma. Se filtran aquí los que
+ * no son de Drive —las encuestas de jotform, los enlaces internos— porque
+ * explorarlos sería pedirle a Google carpetas que no existen.
+ */
+export async function driveLinksOf(
+  courseId: number,
+  courseName: string,
+): Promise<Loaded<DriveLinkInput[]>> {
+  const detail = await loadContents(courseId, courseName);
+  if (detail.state !== "ok") return detail;
+
+  const links = detail.value.links
+    .filter((link) => classifyDriveUrl(link.url).kind !== "unknown")
+    .map((link) => ({
+      url: link.url,
+      moduleName: link.moduleName,
+      sectionName: link.sectionName,
+    }));
+
+  return { state: "ok", value: links };
 }
