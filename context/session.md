@@ -101,30 +101,21 @@ poder darla por cerrada. Qué mirar, en orden:
 Empezar por **un curso**, no por los once: es la regla de siempre, probar con
 límite antes de correr sobre todo.
 
-**2 · Averiguar por qué falla la enumeración de Drive.** La Fase 2 está
-**verificada contra la cuenta real** —45 archivos, tildes y estructura
-correctas—, pero la Fase 3 falla al explorar.
+**2 · La Fase 3 funciona.** Enumeración medida desde el service worker —permiso
+concedido, `credentials: include`, HTTP 200, 1280 bytes, `flip-entries`
+presente—, así que **Google no trata distinto a la extensión que a una
+pestaña**. La hipótesis que quedaba abierta queda descartada por medición y el
+diagnóstico temporal ya está fuera.
 
-Hay un **diagnóstico temporal** puesto para resolverlo por medición y no por
-deducción. Al fallar la exploración, la pantalla enseña: permiso de host
-concedido, modo de credenciales, estado HTTP, bytes recibidos, si el HTML trae
-`flip-entries`, si parece pantalla de acceso, y los primeros 200 caracteres.
+Se bajaron 14 carpetas de contenidos. Lo que salió de ahí:
 
-Las tres causas a descartar, y lo que diría cada una:
-
-| Señal | Causa |
-|---|---|
-| `permiso de host concedido: false` | Declarado en el manifest pero **no concedido**: al añadirlo a una extensión ya cargada hay que recargarla |
-| `credenciales` distinto de `include` | La cookie de Google no viaja. **Ya descartada por código**: el `fetch` lo lleva desde el principio |
-| `estado 200`, con bytes y sin `flip-entries` | Google le da a la extensión un HTML distinto del que le da a una pestaña |
-
-La tercera es la que más me preocupa, y es culpa de cómo se midió: **la
-validación se hizo desde una pestaña de drive.google.com, donde la petición era
-del mismo origen. Desde la extensión no lo es, y esa diferencia nunca se
-midió.** Que funcione en una pestaña no probaba que funcionara en el service
-worker.
-
-**El diagnóstico se quita en cuanto la causa esté encontrada.**
+- **La advertencia de antivirus existe y es por tamaño.** Fallaron dos PPTX y
+  ningún PDF. Implementada la confirmación: se lee el formulario y se repite la
+  petición con todos sus campos. Tercer permiso de host,
+  `drive.usercontent.google.com`, solo para leer esa página.
+- **Una carpeta no se pudo leer** y el aviso lo dijo con su ruta y la
+  sugerencia de abrirla a mano. Es la condición de rotura legible funcionando
+  en un caso real, así que se queda como está.
 
 **3 · Medir lo que queda de Drive** (`fase-3.md` §8c): las rutas de exportación
 de los nativos y una subcarpeta suelta. Ninguno bloquea, pero los dos son
@@ -406,6 +397,9 @@ detalle completo está en `domain.md` §2.
 | Explorar y encolar son dos pasos | El recorrido tarda y puede salir a medias. Un botón único que bajara lo que pudiera dejaría la sensación de haberlo archivado todo, que es la peor forma de fallar aquí |
 | El recorrido va en anchura | Si se alcanza un tope, lo que falta son las ramas más hondas y no media carpeta de primer nivel: más fácil de explicar y de reanudar |
 | Un tipo desconocido no se encola | Bajarlo por la ruta de binario podría traer una página en vez del archivo y ensuciar el destino |
+| Acento por sección, y el verde solo para la acción | El sistema es 70/20/10, y usar el color de acción como decoración hace que deje de leerse como acción. Cada sección toma el color de su familia; los botones, enlaces y foco siguen en verde porque eso es una regla del sistema |
+| El texto de la pestaña activa no es del mismo color en las cinco | Sobre el morado el oscuro da 3,46:1 y falla; el blanco da 5,61. La excepción viaja con la pestaña para no tener que acordarse de ella |
+| El nombre del curso ya no se colorea al pasar el cursor | Sobre `#242424` el rosa cae a 4,05 y el azul a 4,46: ninguno llega a AA como texto. El acento va en la barra de zona, que da al fondo base |
 
 ---
 
@@ -424,10 +418,13 @@ detalle completo está en `domain.md` §2.
 - [x] ~~**Guardar el HTML real como fixture**~~, anonimizado
 - [x] ~~**Correr la Fase 2 contra la cuenta real.**~~ Verificada: 45 archivos en
       Base de Datos, tildes y estructura correctas
-- [ ] **La Fase 3 falla al explorar.** Diagnóstico temporal puesto; falta
-      correrlo y leer lo que dice
-- [ ] **Quitar el diagnóstico temporal de Drive** cuando la causa esté
-      encontrada
+- [x] ~~**La Fase 3 falla al explorar.**~~ Resuelto: funcionaba, y el
+      diagnóstico descartó las tres hipótesis
+- [x] ~~**Quitar el diagnóstico temporal de Drive.**~~ Fuera
+- [ ] **Comprobar si sigue saliendo el diálogo de guardado** tras desactivar
+      «Preguntar dónde guardar cada archivo» en `brave://settings/downloads`.
+      `saveAs: false` está puesto desde el primer commit, así que si persiste
+      es del navegador y hay que medirlo aparte
 - [ ] **Medir las rutas de exportación de los nativos** y **que una subcarpeta
       se enumere igual** (`fase-3.md` §8c). El código ya las da por buenas
 - [ ] **Capturar un fixture limpio** de `embeddedfolderview` con la sonda ya
@@ -681,3 +678,33 @@ quietos con `prefers-reduced-motion`. Y **más presencia del verde** donde es
 acento y no decoración: cifras de resumen, barra de zona en las secciones,
 regla de la cabecera y el nombre del curso al pasar el cursor, este último
 verificado a 8,23:1 sobre `#242424` con `contraste.py`. 181 tests.
+
+**2026-09-06 · 19:00** — **La Fase 3 funciona.** El diagnóstico descartó las
+tres hipótesis: permiso concedido, `credentials: include`, HTTP 200 con 1280
+bytes y `flip-entries` presente. **Google no trata distinto a la extensión que
+a una pestaña**, que era la duda que quedaba y la que más pesaba. Anotado en
+`domain.md` §6 y diagnóstico retirado de todas las capas.
+
+Se bajaron 14 carpetas, y salieron dos cosas. La primera, **la advertencia de
+antivirus**, que estaba anticipada en `medir-drive.js` y se confirmó de la
+forma más limpia posible: fallaron dos PPTX y ningún PDF, y el archivo
+siguiente bajó bien con la misma sesión. Eso descarta la sesión y señala el
+tamaño. Implementada la confirmación, y con dos detalles que no se ven venir:
+**no basta con `confirm=t`** —el formulario trae un `uuid` de esa sesión de
+descarga y sin él Google vuelve a preguntar— y **la pantalla de acceso también
+llega como HTML con estado 200**, así que sin distinguirla el reintento entra
+en bucle contra una página que nunca dará el archivo. Tercer permiso de host,
+solo para leer esa página. La segunda, una carpeta ilegible cuyo aviso salió
+bien redactado y con su ruta: la rotura legible funcionando en un caso real.
+
+**Color repartido.** Me había pasado con el verde en la tanda anterior: usar el
+color de acción como decoración hace que deje de leerse como acción. Ahora cada
+sección toma el color de su familia —Pendientes/Integrar, Cursos/Adaptar,
+Notas/Escalar, Buscar/Evolucionar, Descargas/Construir— y los cinco están
+presentes siempre en las viñetas de la navegación, que es un uso aprobado de
+los puntos. Los botones, enlaces y foco siguen en verde porque eso sí es una
+regla del sistema. Todo verificado con `contraste.py` sobre el fondo real, y de
+ahí salieron dos límites: el morado **falla como texto** (3,46 sobre base, 2,77
+sobre hover) así que solo va como punto, barra de zona y cifra grande; y la
+pestaña activa morada necesita texto blanco cuando las otras cuatro lo llevan
+oscuro. 193 tests.

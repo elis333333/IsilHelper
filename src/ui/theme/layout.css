@@ -93,12 +93,26 @@
               color var(--motion-fast) var(--motion-ease);
 }
 .nav__item:hover { background: var(--color-elevated); color: var(--color-text); }
+/* La pestaña activa se rellena con el color de su sección.
+
+   El color del texto encima NO es el mismo en las cinco, y esto es lo que más
+   se rompe del sistema. Medido con `contraste.py`:
+
+     sobre #06D6A0  oscuro 10,30 · blanco 1,89   → oscuro
+     sobre #FFBE0B  oscuro 11,68 · blanco 1,66   → oscuro
+     sobre #FF006E  oscuro  5,07 · blanco 3,83   → oscuro
+     sobre #3A86FF  oscuro  5,58 · blanco 3,48   → oscuro
+     sobre #8338EC  oscuro  3,46 · blanco 5,61   → BLANCO
+
+   El morado es la excepción y la trae puesta cada pestaña, para que no haya
+   que acordarse de ella. */
 .nav__item[aria-current="page"] {
-  color: var(--color-base);
-  background: var(--acento);
-  border-color: var(--acento);
+  color: var(--sobre-acento-tab, var(--color-base));
+  background: var(--acento-tab);
+  border-color: var(--acento-tab);
   font-weight: var(--weight-semibold);
 }
+.nav__item { display: inline-flex; align-items: center; }
 
 /* ---------- Resumen de urgencias ---------- */
 .resumen { display: flex; flex-wrap: wrap; gap: var(--space-4); margin-bottom: var(--space-8); }
@@ -166,28 +180,26 @@
 .u-later { border-left-color: var(--color-border); }
 .u-later .pendiente__marca { color: var(--color-text-subtle); }
 
-/* ---------- Presencia del color de marca ----------
-   El sistema es 70 % neutros, 20 % verde y 10 % el resto. La interfaz estaba
-   por debajo del 20: el verde solo salía en el botón principal. Se le da sitio
-   donde es acento y no decoración —bordes activos, cifras, marcas de zona—,
-   nunca como fondo de sección o de tarjeta, que es como se pierde. */
+/* ---------- Presencia del color, por sección ----------
+   El acento de cada sección sale de `product.css`, donde está la
+   correspondencia entre sección, verbo y familia, y los contrastes medidos.
+   Aquí solo se usa, y siempre sobre el fondo base #0D0D0D: es el único donde
+   los cinco acentos pasan, incluido el morado. */
 
-/* Las cifras grandes ya iban en acento; ahora también las de los resúmenes. */
-.resumen__cifra { color: var(--acento); }
-/* Salvo las que llevan color funcional propio: ahí manda el estado. */
+/* Cifra grande: a 24 px semibold cuenta como texto grande, así que le basta
+   3:1 y el morado entra con 3,46. */
+.resumen__cifra { color: var(--acento-seccion); }
+/* Salvo las que llevan color funcional propio: ahí el color es información
+   sobre la urgencia y manda el estado. */
 .u-overdue .resumen__cifra { color: var(--color-error); }
 .u-today .resumen__cifra { color: var(--color-warning); }
 .u-week .resumen__cifra { color: var(--color-info); }
 
-/* Barra de zona a la izquierda del bloque, como en la navegación lateral del
-   sistema. Sobre #0D0D0D el verde da 10,30:1. */
+/* Barra de zona a la izquierda del bloque. Es elemento de interfaz, no texto. */
 .seccion__cabecera {
-  border-left: var(--border-width-zone) solid var(--acento);
+  border-left: var(--border-width-zone) solid var(--acento-seccion);
   padding-left: var(--space-4);
 }
-
-/* El titular de la pantalla lleva una regla de acento debajo. */
-.cabecera { border-bottom-color: var(--acento); }
 
 /* ---------- Grilla de cursos ---------- */
 .grilla {
@@ -208,9 +220,15 @@
   font-family: var(--font-body);
   transition: background var(--motion-fast) var(--motion-ease);
 }
-.curso:hover { background: var(--color-elevated); border-color: var(--acento); }
-/* Sobre #242424 el verde da 8,23:1, así que el nombre puede ir en acento. */
-.curso:hover .curso__nombre { color: var(--acento); }
+/* El hover sube la superficie a #242424, y ahí el morado cae a 2,77:1 y falla
+   hasta como elemento de interfaz. Así que el acento va en la barra de zona,
+   que da al fondo base, y el hover solo cambia la superficie. El nombre no se
+   colorea: sobre #242424 ni el rosa ni el azul llegan a AA como texto. */
+.curso {
+  border-left-width: var(--border-width-zone);
+  border-left-color: var(--acento-seccion);
+}
+.curso:hover { background: var(--color-elevated); }
 .curso__nombre { color: var(--color-heading); font-weight: var(--weight-semibold); }
 
 /* Barra de avance. Nunca sola: siempre lleva el porcentaje en texto.
@@ -228,7 +246,7 @@
 .barra__relleno {
   display: block;
   height: 100%;
-  background: var(--acento);
+  background: var(--acento-seccion);
   transition: width var(--motion-base) var(--motion-ease);
 }
 

@@ -65,6 +65,10 @@ dice** —no te enseña una carpeta vacía— y habrá que actualizar la extensi
 Cuando una carpeta no se puede leer, aparece en la lista con el motivo, para
 que puedas ir a buscarla a mano mientras todavía tienes acceso.
 
+Con los archivos grandes Drive muestra un aviso de que no ha podido analizarlos
+en busca de virus. La extensión lo confirma sola, igual que harías tú pulsando
+el botón.
+
 ### Qué no hace, y por qué
 
 - **No baja las clases grabadas de Zoom.** Dos en todo un ciclo, y muy frágil.
@@ -103,6 +107,11 @@ desarrollador** → *Cargar sin empaquetar* → elige la carpeta `dist/`.
 
 La conexión con la plataforma se hace una sola vez, y después funciona aunque
 cierres la sesión allí. La de Google es la que ya usas para abrir el material.
+
+> **Si te pregunta dónde guardar cada archivo**, desactiva *Preguntar dónde
+> guardar cada archivo antes de descargar* en `brave://settings/downloads` (o
+> `chrome://settings/downloads`). Es una preferencia del navegador: la
+> extensión ya pide no preguntar, porque calcula ella la carpeta de destino.
 
 ---
 

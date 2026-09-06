@@ -528,15 +528,46 @@ Es la condición que sostiene toda esta vía, así que no vive en un solo sitio:
    carpetas no se pudieron leer, saberlo hoy es lo que permite ir a buscarlas a
    mano mientras todavía queda acceso.
 
+### La advertencia de antivirus
+
+Salió en la primera tanda real y estaba anticipada en `medir-drive.js`:
+**fallaron dos presentaciones y ningún PDF**. Los PPTX pesan más, y a partir de
+cierto tamaño Google no manda el binario sino una página que pide confirmar,
+con estado 200 y `text/html`.
+
+El síntoma engaña: parece falta de sesión, pero el archivo siguiente baja bien
+con la misma sesión un segundo después. Por eso el mensaje ya no dice «vuelve a
+conectar» en el primer intento, y tras confirmar sin éxito **dice que es por el
+tamaño**, que es lo que de verdad pasa.
+
+`src/api/drive-confirm.ts`, con 9 tests. Dos detalles que no se ven venir:
+
+- **No basta con añadir `confirm=t`.** El formulario trae también un `uuid` de
+  esa sesión de descarga, y sin él Google vuelve a preguntar. Se reenvía el
+  formulario entero.
+- **La pantalla de acceso también llega como HTML con estado 200.** Si no se
+  distingue de la confirmación, el reintento entra en bucle contra una página
+  que nunca va a dar el archivo. Por eso `confirmationUrl` devuelve `null`
+  cuando no encuentra un `confirm` de verdad.
+
+Leerla exige el tercer permiso de host, `drive.usercontent.google.com`, porque
+el `fetch` es cross-origin. Descargar de ahí sigue sin necesitar ninguno.
+
 ### El permiso
 
 Uno solo, y no los dos que preveía la especificación:
 
 ```json
-"host_permissions": ["https://platform.ecala.net/*", "https://drive.google.com/*"]
+"host_permissions": [
+  "https://platform.ecala.net/*",
+  "https://drive.google.com/*",
+  "https://drive.usercontent.google.com/*"
+]
 ```
 
-**No entra `identity` ni `googleapis.com`**, porque no hay OAuth. Y
-`drive.google.com` hace falta **solo para enumerar**: ese `fetch` desde el
-service worker es cross-origin y sin permiso CORS bloquea la lectura. Bajar los
-archivos no necesita permiso ninguno.
+**No entra `identity` ni `googleapis.com`**, porque no hay OAuth. Los dos de
+Google hacen falta **solo para leer HTML**: enumerar carpetas el primero, y la
+advertencia de antivirus el segundo. Los dos `fetch` son cross-origin desde el
+service worker y sin permiso CORS bloquea la lectura. **Bajar los archivos no
+necesita permiso ninguno**: `chrome.downloads` no lo exige sobre la URL que
+descarga.

@@ -117,3 +117,66 @@
   width: auto;
   display: block;
 }
+
+/* =========================================================
+   Acento por sección
+   =========================================================
+   El sistema es 70 % neutros, 20 % verde y 10 % el resto de acentos. La
+   interfaz se había ido al verde en todo, que es el error de «usar el color de
+   acción como decoración»: deja de leerse como acción.
+
+   Cada sección toma el color de la familia con la que se corresponde. No es
+   reparto al azar: cada acento pertenece a un verbo y a una familia, y eso es
+   lo que convierte la paleta en un código legible.
+
+     Pendientes  Integrar     #FFBE0B  lo que reclama atención; ya es el color
+                                       funcional de «hoy» en esa lista
+     Cursos      Adaptar      #8338EC  familia A, sistemas de gestión: la
+                                       estructura del ciclo
+     Notas       Escalar      #FF006E  familia D, datos e inteligencia
+     Buscar      Evolucionar  #3A86FF
+     Descargas   Construir    #06D6A0  familia C: archivar es lo que construye
+
+   **El verde sigue siendo el color de la acción** —botones, enlaces, foco— en
+   todas las secciones, porque eso es una regla del sistema y no una decisión
+   de esta pantalla. Lo que cambia es que deja de invadir lo que no es acción.
+
+   Contrastes medidos con `contraste.py` sobre el fondo real, no supuesto:
+
+     #06D6A0  10,30 : 1   AAA, todo
+     #FFBE0B  11,68 : 1   AAA, todo
+     #3A86FF   5,58 : 1   AA, texto normal
+     #FF006E   5,07 : 1   AA, texto normal
+     #8338EC   3,46 : 1   AA SOLO texto grande e interfaz — nunca texto normal
+
+   El morado manda sobre el resto de reglas: se usa como punto, como barra de
+   zona y en cifras grandes, y **nunca como texto corrido ni sobre #242424**,
+   donde cae a 2,77 : 1 y falla hasta como elemento de interfaz. */
+
+:root { --acento-seccion: var(--acento); }
+
+[data-seccion="pending"]   { --acento-seccion: var(--color-integrate); }
+[data-seccion="courses"]   { --acento-seccion: var(--color-adapt); }
+[data-seccion="course"]    { --acento-seccion: var(--color-adapt); }
+[data-seccion="grades"]    { --acento-seccion: var(--color-scale); }
+[data-seccion="search"]    { --acento-seccion: var(--color-evolve); }
+[data-seccion="downloads"] { --acento-seccion: var(--color-action); }
+
+/* ---------- Viñetas de la navegación ----------
+   Un punto por pestaña con el color de su familia. Es un uso aprobado de los
+   cinco puntos —viñeta de lista, con el color de la familia correspondiente— y
+   no la fila del logotipo, que exigiría respetar el orden fijo. Sirve además
+   para que los cinco colores estén presentes en cualquier pantalla. */
+.nav__punto {
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: 50%;
+  flex: 0 0 auto;
+  margin-right: var(--space-2);
+}
+
+/* En la pestaña activa el fondo ya es su acento, así que el punto pasa al
+   color del texto para no desaparecer sobre su propio color. */
+.nav__item[aria-current="page"] .nav__punto {
+  background: var(--sobre-acento-tab, var(--color-base)) !important;
+}

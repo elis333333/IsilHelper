@@ -37,8 +37,10 @@ export default function Home() {
     },
   });
 
+  // El acento de la sección viaja por el DOM: cada pantalla tiene el color de
+  // su familia, y los componentes de dentro lo usan sin saber cuál es.
   const shell = (children: React.ReactNode) => (
-    <main className="pantalla">
+    <main className="pantalla" data-seccion={view.name}>
       <div className="pantalla__centro">
         {children}
         <footer className="pie">
