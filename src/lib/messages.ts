@@ -45,6 +45,11 @@ export type SessionSnapshot =
        *  la plataforma no lo devuelve, que es un caso normal. */
       email: string | null;
       department: string | null;
+      /** La foto de perfil ya convertida en `data:`, nunca su URL: la URL
+       *  lleva el token pegado y esto cruza a la pestaña. `null` cuando no hay
+       *  foto, no se pudo bajar, o Moodle sirve el muñeco gris; en los tres
+       *  casos la cabecera enseña las iniciales. */
+      avatar: string | null;
       courses: CourseSummary[];
     }
   | { state: "failed"; reason: FailureReason };

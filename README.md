@@ -84,7 +84,7 @@ el botón.
 Todavía no está en las tiendas. Se carga sin empaquetar:
 
 ```
-git clone <este repositorio> && cd IsilHelper
+git clone https://github.com/elis333333/IsilHelper && cd IsilHelper
 pnpm install
 pnpm build
 ```
@@ -136,14 +136,34 @@ abierto para que cualquiera lo verifique.
 Puedes revocar el acceso cuando quieras desde
 `platform.ecala.net/user/managetoken.php`.
 
+La versión formal de todo esto, que es la que enlazan las tiendas, está en
+[PRIVACY.md](PRIVACY.md).
+
 ---
 
-## Aviso
+## Apoyar el proyecto
+
+**Si te ahorró la tarde, invítame un café.**
+
+<img src="public/apoyo/yape.png" alt="Código QR de Yape para enviar un aporte" width="180">
+
+Escanea el código con Yape. Es un aporte voluntario a quien mantiene esto, no un
+pago por usarlo: IsilHelper es gratis y no deja de serlo si no lo haces.
+
+Si prefieres ayudar sin poner dinero, también sirve: abre un incidente contando
+qué se rompió, o pásaselo a alguien de tu ciclo.
+
+---
+
+## Aviso legal
 
 Proyecto estudiantil sin relación con ISIL ni con sus proveedores. Usa los web
 services públicos de Moodle con tu propia cuenta y solo para leer. Si el
 instituto desactiva ese servicio, la extensión dejará de funcionar y te lo
 dirá con claridad: aquí no se promete permanencia.
+
+El detalle —falta de afiliación, uso del nombre, responsabilidad del estudiante
+y ausencia de garantías— está en [LEGAL.md](LEGAL.md).
 
 ---
 
@@ -158,9 +178,9 @@ pnpm test
 ```
 
 El contexto del proyecto vive en `context/`: `project.md` (qué se construye y
-en qué orden), `domain.md` (todo lo averiguado sobre la plataforma) y
-`session.md` (dónde se quedó el trabajo). Las convenciones, en
-`CONVENTIONS.md`.
+en qué orden), `domain.md` (todo lo averiguado sobre la plataforma),
+`session.md` (dónde se quedó el trabajo) y `tienda.md` (los textos y las
+capturas de la ficha de tienda). Las convenciones, en `CONVENTIONS.md`.
 
 ---
 

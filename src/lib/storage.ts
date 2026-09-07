@@ -49,8 +49,18 @@ const PROFILE_KEY = "moodleProfile";
 
 /** Lo poco del perfil que la cabecera enseña. Se guarda por lo mismo que el
  *  `userid`: no cambia de un día para otro y cada llamada de más son 600 ms de
- *  pausa contra el WAF. */
-export type StoredProfile = { email: string | null; department: string | null };
+ *  pausa contra el WAF.
+ *
+ *  `avatar` es la foto ya convertida en `data:`, no su URL. La URL lleva el
+ *  token pegado (`domain.md` §4) y guardarla aquí sería dejar el token escrito
+ *  en un segundo sitio, además de mandarlo a la interfaz en cuanto la cabecera
+ *  lo pintara. `null` cuando no hay foto, no se pudo bajar, o Moodle sirve el
+ *  muñeco gris: los tres casos acaban en las iniciales. */
+export type StoredProfile = {
+  email: string | null;
+  department: string | null;
+  avatar: string | null;
+};
 
 function asText(value: unknown): string | null {
   return typeof value === "string" && value.trim() !== "" ? value : null;
@@ -61,7 +71,17 @@ export async function readProfile(): Promise<StoredProfile | null> {
   const value: unknown = stored[PROFILE_KEY];
   if (typeof value !== "object" || value === null) return null;
   const record = value as Record<string, unknown>;
-  return { email: asText(record.email), department: asText(record.department) };
+
+  // Un perfil guardado antes de que existiera la foto no tiene la clave, y no
+  // es lo mismo que tenerla en `null`: se pide otra vez, una sola vez, en vez
+  // de dejar a quien ya estaba conectado con iniciales para siempre.
+  if (!("avatar" in record)) return null;
+
+  return {
+    email: asText(record.email),
+    department: asText(record.department),
+    avatar: asText(record.avatar),
+  };
 }
 
 export async function writeProfile(profile: StoredProfile): Promise<void> {

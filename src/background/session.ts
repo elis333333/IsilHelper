@@ -3,6 +3,8 @@
 
 import { getSiteInfo, getUserCourses } from "../api/site";
 import { getUserProfile } from "../api/profile";
+import { fetchAvatar } from "../api/avatar";
+import { isGenericAvatar } from "../lib/avatar";
 import type { AuthError } from "./auth";
 import { requestToken } from "./auth";
 import { apiFailure } from "./data";
@@ -10,6 +12,7 @@ import {
   clearToken,
   hasToken,
   readProfile,
+  readToken,
   writeProfile,
   writeUserId,
   type StoredProfile,
@@ -18,6 +21,29 @@ import type { FailureReason, SessionSnapshot } from "../lib/messages";
 
 function authFailure(error: AuthError): FailureReason {
   return error.kind === "nosession" ? "nosession" : "unexpected";
+}
+
+/**
+ * La foto de perfil, que es la única parte del perfil que cuesta una petición
+ * aparte.
+ *
+ * Se baja **aquí y no en la interfaz** porque su URL necesita el token pegado
+ * (`domain.md` §4): a la pestaña le cruza la imagen ya hecha `data:`, nunca la
+ * URL. Y no se baja siempre: cuando el estudiante no subió ninguna, Moodle
+ * sirve el muñeco gris del tema, que no dice quién es nadie y no vale otros
+ * 600 ms de pausa.
+ *
+ * Falla en silencio a propósito. Quedarse sin foto no es un fallo que el
+ * estudiante tenga que leer ni arreglar: la cabecera enseña sus iniciales.
+ */
+async function loadAvatar(url: string | undefined): Promise<string | null> {
+  if (url === undefined || url === "" || isGenericAvatar(url)) return null;
+
+  const token = await readToken();
+  if (token === null) return null;
+
+  const image = await fetchAvatar(url, token);
+  return image.ok ? image.value : null;
 }
 
 /** El perfil se pide una sola vez en la vida de la sesión y se guarda. Si
@@ -33,6 +59,7 @@ async function loadProfile(userid: number): Promise<StoredProfile | null> {
   const profile: StoredProfile = {
     email: fetched.value.email ?? null,
     department: fetched.value.department ?? null,
+    avatar: await loadAvatar(fetched.value.profileimageurl),
   };
   await writeProfile(profile);
   return profile;
@@ -58,6 +85,7 @@ export async function readSession(): Promise<SessionSnapshot> {
     sitename: info.value.sitename,
     email: profile?.email ?? null,
     department: profile?.department ?? null,
+    avatar: profile?.avatar ?? null,
     courses: courses.value.map((course) => ({
       id: course.id,
       fullname: course.fullname,

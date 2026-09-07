@@ -26,6 +26,12 @@ de correrla contra la cuenta real.
 
 ## Fase actual
 
+**Fase 4 — Distribución, empezada el 7 de septiembre de 2026.** El producto
+está hecho y verificado contra la cuenta real; lo que queda es lo que hace
+falta para publicarlo. En esta tanda entraron los cuatro frentes que Elis pidió
+cerrar antes de la tienda: interfaz, apoyo económico, ficha de tienda y legal.
+Lo que sigue abajo, en **Siguiente paso**, es lo que todavía no está.
+
 **La Fase 2 está escrita y en verde**, y lo siguiente es una sola cosa:
 **correrla contra la cuenta real**. 126 tests, `typecheck`, `lint` y `build`
 pasando, pero ni un solo archivo se ha bajado todavía de la plataforma de
@@ -82,42 +88,43 @@ Tipos de módulo nuevos: `folder` y `zoom`. Las clases grabadas **no** son
 
 ## Siguiente paso
 
-**1 · Correr la Fase 2 contra la cuenta real.** Es lo único que falta para
-poder darla por cerrada. Qué mirar, en orden:
+**1 · Probar en Brave lo de esta tanda.** Está todo en verde —210 tests,
+`typecheck`, `lint` y `build`— y la cabecera y el pie se comprobaron
+renderizados con el CSS ya compilado, pero **la foto de perfil no se ha
+descargado nunca de la plataforma de verdad**. Qué mirar:
 
-- Que los 55 archivos del inventario acaben en `Descargas/IsilHelper/`, con el
-  árbol de curso y sección, y que los PDFs **abran** —no que existan: que
-  abran—. Un HTML de login pesa unos pocos KB y tiene extensión de PDF.
-- Que la cola no se pare al dormirse el service worker. La prueba es dejarla
-  corriendo con un curso entero y no tocar nada durante un minuto.
-- Que `chrome://downloads` **no** tenga entradas de IsilHelper al terminar: ahí
-  es donde quedaría la URL con el token si el `erase` fallara.
-- Que un segundo *Descargar todo el curso* diga "ya lo tienes" en vez de
-  bajarlo otra vez.
-- Los adjuntos de las tareas, que son la llamada nueva
-  (`mod_assign_get_assignments`) y la única pieza sin verificar contra datos
-  reales.
+- Que la foto aparezca. Si sale la inicial, hay que saber por qué: puede ser
+  que la cuenta no tenga foto —correcto— o que la descarga falle, que hoy no se
+  distingue desde fuera porque falla en silencio a propósito.
+- Que en el inspector de la pestaña **el `src` de la imagen empiece por
+  `data:`**. Si alguna vez empezara por `https://platform.ecala.net`, el token
+  estaría escrito en el DOM y eso es la regla 4 rota.
+- Que a quien ya estaba conectado le aparezca la foto sin cerrar sesión:
+  `readProfile` devuelve `null` cuando al perfil guardado le falta la clave
+  `avatar`, así que se pide una vez más y se guarda.
+- Que el QR del pie **lo lea Yape de verdad**, con un teléfono. Está verificado
+  con `zbarimg` —el código reducido lleva exactamente el mismo contenido que el
+  original— pero eso comprueba el código, no que la aplicación lo acepte.
 
-Empezar por **un curso**, no por los once: es la regla de siempre, probar con
-límite antes de correr sobre todo.
+**2 · Las tres decisiones que quedan antes de subir nada a una tienda**, y son
+de Elis, no del código:
 
-**2 · La Fase 3 funciona.** Enumeración medida desde el service worker —permiso
-concedido, `credentials: include`, HTTP 200, 1280 bytes, `flip-entries`
-presente—, así que **Google no trata distinto a la extensión que a una
-pestaña**. La hipótesis que quedaba abierta queda descartada por medición y el
-diagnóstico temporal ya está fuera.
+- **El nombre de ISIL en el título de la ficha.** `project.md` decidió en su
+  día no usarlo; la recomendación, con sus tres condiciones, está en
+  `context/tienda.md`. Si se acepta, aplicarlo es editar `manifest.config.ts`
+  (`name`) y `package.json` (`description`): en Chrome esos dos campos **son**
+  el título y la descripción breve de la tienda.
+- **La licencia.** AMO obliga a elegir una, y hoy el repositorio no tiene
+  `LICENSE`. Sin ella, «código abierto para que cualquiera lo verifique» es
+  cierto de hecho pero no de derecho.
+- **Si avisar a sistemas de ISIL antes de publicar**, que ya estaba anotado.
 
-Se bajaron 14 carpetas de contenidos. Lo que salió de ahí:
+**3 · Las capturas.** Cinco, a 1280 × 800, con lo que tiene que demostrar cada
+una en `context/tienda.md`. La primera enseña la descarga, no el tablero. Sin
+datos personales a la vista: para eso conviene encuadrar dejando la cabecera
+fuera.
 
-- **La advertencia de antivirus existe y es por tamaño.** Fallaron dos PPTX y
-  ningún PDF. Implementada la confirmación: se lee el formulario y se repite la
-  petición con todos sus campos. Tercer permiso de host,
-  `drive.usercontent.google.com`, solo para leer esa página.
-- **Una carpeta no se pudo leer** y el aviso lo dijo con su ruta y la
-  sugerencia de abrirla a mano. Es la condición de rotura legible funcionando
-  en un caso real, así que se queda como está.
-
-**3 · Medir lo que queda de Drive** (`fase-3.md` §8c): las rutas de exportación
+**4 · Medir lo que queda de Drive** (`fase-3.md` §8c): las rutas de exportación
 de los nativos y una subcarpeta suelta. Ninguno bloquea, pero los dos son
 supuestos que el código ya da por buenos.
 
@@ -143,6 +150,41 @@ Lo que ese segundo diagnóstico tiene que contestar:
 Después del segundo diagnóstico: endurecer `types.ts` y retomar la Fase 1b por
 las entregas con retroalimentación, si es que para entonces tienen fuente.
 ## Hecho
+
+### Fase 4 · lo que hace falta para publicar
+
+**Interfaz.**
+
+- **Los cinco puntos salen de la cabecera.** El logotipo del pie se queda, que
+  es donde la skill pone la firma de respaldo. La cabecera se queda solo con el
+  nombre del producto, que es de quien tiene que ser esa zona
+- **Foto de perfil**, de `profileimageurl`, sin ninguna petición nueva a la
+  API: sale de la misma llamada que ya traía correo y `department`
+- `src/lib/avatar.ts` — puro: si la URL es el avatar genérico de Moodle y las
+  iniciales del nombre. 10 tests
+- `src/api/avatar.ts` — la descarga: token pegado, comprobación de
+  `Content-Type` y conversión a `data:`. 7 tests
+- `waitForTurn()` exportado desde `client.ts`, para que la foto respete la
+  misma pausa de 600 ms que el resto
+
+**Apoyo económico.**
+
+- QR de Yape en el pie de la extensión, a 128 px, junto al enlace al
+  repositorio. `public/apoyo/yape.png`, 21 KB, reducido desde
+  `assets/QR Yape.jpg` y **verificado con `zbarimg`**: el código reducido
+  lleva exactamente el mismo contenido que el original
+- `src/ui/components/Footer.tsx`, sacado de `Home.tsx` para no pasar de las
+  ~150 líneas que pide `CONVENTIONS.md`
+- Sección «Apoyar el proyecto» en el README, con el mismo QR y la misma frase
+
+**Ficha de tienda.** `context/tienda.md`: título, descripción breve y
+descripción larga para Chrome Web Store y Firefox AMO, con los caracteres ya
+contados contra el límite de cada campo, las etiquetas de AMO, las notas para
+quien revisa, y las cinco capturas con lo que tiene que demostrar cada una.
+
+**Legal.** `LEGAL.md` y `PRIVACY.md`, en documentos aparte para que la tienda
+pueda enlazarlos —Chrome Web Store exige una URL de política de privacidad— y
+enlazados los dos desde el README.
 
 ### Fase 2 · descargas de Moodle
 
@@ -400,6 +442,18 @@ detalle completo está en `domain.md` §2.
 | Acento por sección, y el verde solo para la acción | El sistema es 70/20/10, y usar el color de acción como decoración hace que deje de leerse como acción. Cada sección toma el color de su familia; los botones, enlaces y foco siguen en verde porque eso es una regla del sistema |
 | El texto de la pestaña activa no es del mismo color en las cinco | Sobre el morado el oscuro da 3,46:1 y falla; el blanco da 5,61. La excepción viaja con la pestaña para no tener que acordarse de ella |
 | El nombre del curso ya no se colorea al pasar el cursor | Sobre `#242424` el rosa cae a 4,05 y el azul a 4,46: ninguno llega a AA como texto. El acento va en la barra de zona, que da al fondo base |
+| Los cinco puntos salen de la cabecera | El logotipo del pie ya es la firma de respaldo, y era el segundo sitio en la misma pantalla donde hablaba la marca madre. La cabecera es del producto |
+| **La foto se baja en el worker y cruza como `data:`** | Su URL va a `pluginfile.php` y necesita el token pegado. Pasarle la URL a la pestaña dejaría el token escrito en el DOM, a la vista en el inspector: es la regla 4 rota en un sitio nuevo, igual que lo estaba en el historial de descargas |
+| Un 200 con HTML tampoco es una foto | Es el mismo fallo que ya se cazaba en las descargas. Sin la comprobación, el `<img>` sale roto y no dice por qué |
+| El avatar genérico no se descarga | El muñeco gris de Moodle no dice quién es nadie y cuesta 600 ms de pausa. Las iniciales dicen más y no cuestan ninguna petición |
+| La foto falla en silencio | Es lo menos importante de la cabecera. Un aviso de «no se pudo cargar tu foto» manda a arreglar algo que no hace falta arreglar |
+| El avatar es cuadrado, con radio 0 | El círculo es la excepción reservada a los cinco puntos y a la cajita del logotipo. Redondearlo sería traerse una convención de fuera solo porque «los avatares se hacen así» |
+| Sin código de alumno, carrera ni ciclo en la cabecera | Sigue sin haber fuente (`domain.md` §4). Rellenarlo sería inventarlo, que es justo lo que tumbó la pantalla de perfil |
+| El QR va en el pie y dice que es voluntario | Un código de pago en una herramienta gratuita se lee como un peaje si no se dice lo contrario. Y va abajo porque una petición no se pone delante de lo que el estudiante vino a hacer |
+| Solo Yape, sin PayPal | Decisión de Elis el 7 de septiembre de 2026 |
+| El QR se reduce a 320 px y se verifica decodificándolo | Un QR redimensionado que ya no escanea falla en silencio y nadie se entera hasta que alguien lo intenta. `zbarimg` confirma que el contenido es idéntico al del original |
+| `LEGAL.md` y `PRIVACY.md` aparte del README | Chrome Web Store exige una **URL** de política de privacidad, y un ancla dentro del README no sirve. Además el registro son dos: el del README es cercano y tutea; el de la tienda es formal |
+| El nombre de ISIL en el título de la tienda queda **sin decidir** | Contradice lo escrito en `project.md` y es una decisión de marca, no de código. La recomendación —usarlo, con tres condiciones— está en `context/tienda.md` |
 
 ---
 
@@ -437,6 +491,17 @@ detalle completo está en `domain.md` §2.
       vacío en los 11 cursos el 5 de septiembre de 2026. Se resuelve corriendo
       el diagnóstico a partir del 6 de octubre. **De esto depende la pieza de
       retroalimentación de la Fase 1b**
+- [ ] **Elegir licencia.** AMO obliga a declarar una y el repositorio no tiene
+      `LICENSE`. Sin ella, «código abierto para que cualquiera lo verifique»
+      es cierto de hecho pero no de derecho
+- [ ] **Decidir el título de la ficha de tienda** y, si se acepta el que se
+      recomienda, aplicarlo en `manifest.config.ts` y `package.json`
+- [ ] **Hacer las cinco capturas** de `context/tienda.md`, a 1280 × 800 y sin
+      datos personales a la vista
+- [ ] **Escanear el QR del pie con Yape de verdad.** Verificado con `zbarimg`,
+      que comprueba el código pero no que la aplicación lo acepte
+- [ ] **Ver la foto de perfil contra la cuenta real**, y que su `src` empiece
+      por `data:` y no por la URL de la plataforma
 - [ ] Decidir qué hacer con `Tus calificaciones`, que ya no filtra nadie
       (`domain.md` §5)
 - [ ] Confirmar si el horario está disponible vía API
@@ -708,3 +773,48 @@ ahí salieron dos límites: el morado **falla como texto** (3,46 sobre base, 2,7
 sobre hover) así que solo va como punto, barra de zona y cifra grande; y la
 pestaña activa morada necesita texto blanco cuando las otras cuatro lo llevan
 oscuro. 193 tests.
+
+**2026-09-07 · 07:30** — Cuatro frentes para poder publicar, y ninguno es la
+descarga: el producto ya está y lo que falta es la tienda.
+
+**Los cinco puntos salen de la cabecera.** Estaban repetidos —el logotipo del
+pie ya es la firma de respaldo— y la cabecera tiene que ser del producto, no de
+la marca madre. En su lugar entra **la foto de perfil**, que no cuesta ninguna
+petición nueva a la API: sale de la misma llamada que ya traía correo y
+`department`. Lo que sí cuesta es bajar la imagen, y ahí estaba lo que no se ve
+venir: **su URL va a `pluginfile.php`, así que lleva el token pegado**. Pasarle
+esa URL a la pestaña habría dejado el token escrito en el DOM, a la vista en el
+inspector de cualquiera — la regla 4 rota en un sitio nuevo, exactamente igual
+que lo estaba en el historial de descargas. Así que la foto se baja **en el
+service worker** y cruza ya convertida en `data:`. De paso, tres cosas más: un
+200 con HTML no es una foto y se caza mirando el `Content-Type`, igual que en
+las descargas; el avatar genérico de Moodle no se baja porque el muñeco gris no
+dice quién es nadie y las iniciales sí; y la foto **falla en silencio**, porque
+es lo menos importante de la pantalla y un aviso de «no se pudo cargar tu foto»
+manda a arreglar lo que no hace falta arreglar. Cuadrada y con radio 0: el
+círculo es la excepción de los cinco puntos y de la cajita, y redondearla sería
+importar una convención de fuera solo porque los avatares se hacen así.
+
+**Apoyo económico.** QR de Yape en el pie, pequeño, con el enlace al
+repositorio al lado. La frase salió de tres candidatas y ganó «Si te ahorró la
+tarde, invítame un café» por ser la única que nombra lo que la herramienta
+acaba de hacer por ti en vez de hablar de quien la mantiene. Debajo, la nota
+que evita que un código de pago en una herramienta gratuita se lea como un
+peaje: aporte voluntario, no pago por usarlo. El QR se redujo de 2 236 a 320 px
+y **se verificó decodificándolo con `zbarimg`**, porque un QR redimensionado
+que ya no escanea falla en silencio: el contenido es idéntico al del original.
+Solo Yape, sin PayPal, por decisión de Elis.
+
+**Ficha de tienda** en `context/tienda.md`, con los caracteres contados contra
+el límite de cada campo. Un detalle que cambia dónde se escriben las cosas: en
+Chrome Web Store **el título y la descripción breve no se escriben en el panel,
+salen del manifest**, así que aplicarlos es editar `manifest.config.ts` y
+`package.json`. Y una decisión que no se toma sola: meter «ISIL» en el título
+contradice lo que decidió `project.md` en su día. Queda recomendada —con las
+tres condiciones que la dejan fuera de duda— y sin aplicar.
+
+**Legal** en dos documentos aparte, `LEGAL.md` y `PRIVACY.md`, y no como
+sección del README: Chrome Web Store pide una **URL** de política de
+privacidad y un ancla dentro del README no vale. Los dos van en registro
+formal, que es lo que pide la skill de voz para un documento legal; el README
+se queda con su versión cercana y enlaza a los dos. 210 tests.

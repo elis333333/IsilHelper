@@ -56,6 +56,19 @@ function throttle(deps: WebServiceDeps): Promise<void> {
   return turn;
 }
 
+/**
+ * Reserva turno en la pausa global para una petición a la plataforma que no
+ * pasa por `callWebService` —hoy, la foto de perfil, que es un binario y no
+ * una llamada de web service—.
+ *
+ * La pausa protege del WAF y es de **toda la extensión**, no de esta función:
+ * saltársela por entrar a la plataforma por otra puerta sería exactamente la
+ * ráfaga que `domain.md` §2 dice que no hay que hacer.
+ */
+export function waitForTurn(deps: WebServiceDeps = realDeps): Promise<void> {
+  return throttle(deps);
+}
+
 /** Solo para los tests: reinicia el estado de la pausa entre casos. */
 export function resetThrottle(): void {
   chain = Promise.resolve();

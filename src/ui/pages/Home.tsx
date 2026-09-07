@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ConnectPanel } from "../components/ConnectPanel";
 import { FailureNotice } from "../components/FailureNotice";
 import { SessionHeader } from "../components/SessionHeader";
+import { Footer } from "../components/Footer";
 import { Nav } from "../components/Nav";
 import { Cargando } from "../components/Puntos";
 import { ask } from "../lib/messaging";
@@ -43,18 +44,7 @@ export default function Home() {
     <main className="pantalla" data-seccion={view.name}>
       <div className="pantalla__centro">
         {children}
-        <footer className="pie">
-          {/* La firma de respaldo es el único vínculo obligatorio con la marca
-              madre, y va aquí: la identidad de la cabecera es la del producto. */}
-          <p className="firma">
-            <img
-              className="firma__logo"
-              src={chrome.runtime.getURL("marca/suki-oscuro.png")}
-              alt="Suki"
-            />
-            <span className="firma-labs">IsilHelper · un proyecto de Suki</span>
-          </p>
-        </footer>
+        <Footer />
       </div>
     </main>
   );
@@ -95,6 +85,7 @@ export default function Home() {
         fullname={session.data.fullname}
         email={session.data.email}
         department={session.data.department}
+        avatar={session.data.avatar}
         onDisconnect={() => act.mutate("disconnect")}
       />
       <Nav />

@@ -44,6 +44,34 @@
   border-top: 1px solid var(--color-border);
 }
 
+/* ---------- Apoyo económico ----------
+   Abajo y pequeño: es una petición, y una petición no se pone delante de lo
+   que el estudiante vino a hacer. */
+.apoyo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
+}
+
+/* El QR conserva su fondo claro porque lo necesita para escanearse: un código
+   sobre superficie oscura no lo lee ningún teléfono. El borde de 1 px lo
+   integra con el resto sin redondearlo ni ponerle sombra. */
+.apoyo__qr {
+  width: 128px;
+  height: 128px;
+  flex: 0 0 auto;
+  display: block;
+  border: 1px solid var(--color-border);
+}
+
+.apoyo__titulo {
+  color: var(--color-heading);
+  font-weight: var(--weight-semibold);
+  margin: 0 0 var(--space-2);
+}
+
 .acciones {
   display: flex;
   gap: var(--space-4);
@@ -67,6 +95,41 @@
   gap: var(--space-4);
   padding-bottom: var(--space-6);
   border-bottom: 1px solid var(--color-border);
+}
+
+/* Identidad de la sesión: la foto y, al lado, quién eres y tu correo. */
+.sesion {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* La foto de perfil. Cuadrada y con radio 0 como todo lo demás: el círculo es
+   la excepción reservada a los cinco puntos y a la cajita del logotipo, y
+   redondearla aquí sería traerse una convención de otro sistema solo porque
+   «los avatares se hacen así». El borde de 1 px la separa del fondo sin
+   sombra, igual que cualquier otra superficie. */
+.avatar {
+  width: var(--control-alto);
+  height: var(--control-alto);
+  flex: 0 0 auto;
+  display: block;
+  border: 1px solid var(--color-border);
+  object-fit: cover;
+}
+
+/* Sin foto —o con el muñeco gris de Moodle, que es lo mismo— van las
+   iniciales. Neutras a propósito: el verde es el color de la acción y una
+   inicial no se pulsa. */
+.avatar--iniciales {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface);
+  color: var(--color-heading);
+  font-size: var(--text-body-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-label);
 }
 
 .nav {

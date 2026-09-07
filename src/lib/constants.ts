@@ -7,6 +7,10 @@ export const LAUNCH_ENDPOINT = `${BASE}/admin/tool/mobile/launch.php`;
 /** Esquema propio al que redirige `launch.php` con el token. */
 export const URL_SCHEME = "isilhelper";
 
+/** El repositorio. Va en el pie de la interfaz y es lo que hace verificable la
+ *  promesa de «no hay servidor»: sin código a la vista, es solo una promesa. */
+export const REPO_URL = "https://github.com/elis333333/IsilHelper";
+
 /** El WAF castiga las ráfagas: 600 ms mínimo entre peticiones. */
 export const PAUSE_MS = 600;
 
