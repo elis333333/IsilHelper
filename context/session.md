@@ -151,6 +151,90 @@ Después del segundo diagnóstico: endurecer `types.ts` y retomar la Fase 1b por
 las entregas con retroalimentación, si es que para entonces tienen fuente.
 ## Hecho
 
+### Interfaz · navbar, avisos visibles y apoyo económico como ventana
+
+Tres ajustes de UI que pidió Elis, sin tocar auth, descarga de Moodle ni el
+parsing de Drive.
+
+**1 · Navbar en una sola fila.** `SessionHeader.tsx`: la foto, el nombre y el
+botón *Cerrar sesión* pasan de "sesión apilada + botón debajo con
+`margin-top`" a los tres dentro de `.sesion`, un único flex-row. Nueva clase
+`.sesion__detalle` en `layout.css` para el correo/unidad: `.parrafo` traía
+`max-width: 65ch` y un margen pensados para texto largo, que sobraban en una
+línea compacta de navbar. `.sesion` gana `flex-wrap` como salvaguarda a
+ancho angosto —el botón baja de línea dentro del propio bloque en vez de
+reventar la cabecera—. Nada de color nuevo: todo sale de tokens ya
+existentes.
+
+**2 · Avisos como toast, para lo que antes era texto fácil de ignorar.** No
+existía ningún sistema de toast en el proyecto; se construyó el más simple
+posible con lo que ya había —`.estado`, tokens de color y movimiento—, sin
+traer ninguna librería. `src/ui/store/toasts.ts` (Zustand, mismo patrón que
+`navigation.ts`) + `src/ui/components/ToastStack.tsx`, montado una vez en
+`Home.tsx` para que un aviso aparezca sin importar la pantalla. Dos
+disparadores, elegidos porque son los casos reales que quedaban enterrados:
+
+- `DrivePanel.tsx` — cuando explorar Drive sale `drive-failed` (sin sesión de
+  Google, o cuenta no institucional) o `course-failed` (token/WAF), además
+  del aviso inline que ya había —que se queda, con su botón de reintentar—.
+  `failureTitle()`, exportado de `FailureNotice.tsx`, para no redactar el
+  mismo título dos veces.
+- `useDownloadFailureToasts()` en `src/ui/lib/downloads.ts` — vigila
+  `useQueue()` y avisa del **primer** archivo que empieza a fallar (no de
+  los que ya estaban fallados), agrupando en un solo toast si fallan varios
+  a la vez. Se monta en `Home.tsx` y no en `Downloads.tsx`: una descarga
+  puede fallar mientras el estudiante está en otra pantalla, y ahí es donde
+  el texto rojo de la fila no servía de nada.
+
+**Lo que NO cambió, a propósito**: la lista de "carpetas que no pude leer"
+dentro de `ExplorationReport` (en `DrivePanel.tsx`) y el aviso de adjuntos
+que faltan en `CourseDetail.tsx`. Son información sobre lo que se encontró,
+no un fallo que bloquee la acción, y convertirlos en modal habría sido
+intrusivo por algo que ya se lee bien donde está.
+
+**3 · Modal de donación**, con el mismo QR del pie
+(`public/apoyo/yape.png`, sin generar uno nuevo). Dispara a los dos minutos
+de uso con sesión conectada, o justo al terminar una descarga —lo que llegue
+antes—, y no más de una vez por apertura de la extensión.
+`src/ui/store/donation.ts` lleva el `shown`/`open` **en memoria**, no en
+`storage.local`: es una pregunta que solo importa mientras dura la pestaña
+abierta, no un dato que tenga sentido guardar junto al token o la cola.
+`src/ui/lib/donation.ts` tiene los dos relojes —el de dos minutos y el que
+mira `useQueue()` para detectar que la cola pasó de corriendo a parada con
+algo `done`—, los dos solo activos con sesión conectada. Reutiliza
+`.velo`/`.modal` de `ui.css`, que existían en la skill desde el principio
+pero nadie los había usado todavía: se les añadió el centrado
+—`display:flex` en `.velo`, que no lo traía— porque sin eso el modal caía
+arriba a la izquierda. Cierra con Escape y devuelve el foco a donde estaba,
+como pide `suki-product-ui`. Un solo botón, *Ahora no*, tan visible como el
+QR: no hay una acción "afirmativa" que compita con él porque no hay nada que
+confirmar dentro de la extensión, Yape es escanear con el teléfono.
+
+**El texto queda provisional.** Tres variantes con el tono del pie, a la
+espera de que Elis elija:
+
+> A · "¿Te ahorró trabajo esto?" — Escanea el código con Yape si quieres
+> invitarme un café. Es un aporte voluntario a quien mantiene esto, no un
+> pago por usarlo: la extensión sigue siendo gratis lo escanees o no.
+>
+> B · "Un café, si quieres" — IsilHelper es gratis y se queda así. Si te
+> sirvió y te sobra un sol, este es el Yape de quien lo mantiene. Si no,
+> cierra esto y sigue con lo tuyo.
+>
+> C · "Ya que estás por aquí" — Esto no te pidió nada para funcionar, pero
+> mantenerlo sí cuesta tiempo. Si quieres devolver algo, aquí está el Yape.
+> Si no, ningún problema: sigue bajando tus cursos.
+
+**Elis eligió la C, «Ya que estás por aquí», la misma tanda.** Puesta en
+`DonationModal.tsx`.
+
+`typecheck`, `lint`, `test` (210, sin tests nuevos: es UI, y
+`CONVENTIONS.md` no exige cobertura ahí) y los dos builds en verde.
+Verificado visualmente con capturas estáticas del CSS ya compilado —navbar en
+una fila a 1280 px y a 600 px, toasts apilados, modal centrado y en columna a
+480 px—, no cargando la extensión de verdad en un navegador: la máquina
+sigue con poca memoria libre después de la tanda de Firefox de hoy.
+
 ### Fase 4 · lo que hace falta para publicar
 
 **Interfaz.**
@@ -454,11 +538,43 @@ detalle completo está en `domain.md` §2.
 | El QR se reduce a 320 px y se verifica decodificándolo | Un QR redimensionado que ya no escanea falla en silencio y nadie se entera hasta que alguien lo intenta. `zbarimg` confirma que el contenido es idéntico al del original |
 | `LEGAL.md` y `PRIVACY.md` aparte del README | Chrome Web Store exige una **URL** de política de privacidad, y un ancla dentro del README no sirve. Además el registro son dos: el del README es cercano y tutea; el de la tienda es formal |
 | El nombre de ISIL en el título de la tienda queda **sin decidir** | Contradice lo escrito en `project.md` y es una decisión de marca, no de código. La recomendación —usarlo, con tres condiciones— está en `context/tienda.md` |
+| Licencia MIT | Decisión de Elis el 7 de septiembre de 2026. `LICENSE` sin modificar: un texto no estándar puede confundir a las herramientas que detectan la licencia |
+| `gecko.id` es un UUID, no `isilhelper@suki.com.pe` | El dominio no existe —WHOIS de NIC.PE, comprobado— y un id con forma de correo sobre un dominio ajeno o inexistente reclama algo que no es. El UUID no tiene forma de dirección, así que no insinúa nada |
+| Dos builds —`dist/` y `dist-firefox/`— en vez de un manifest con `service_worker` y `scripts` juntos | `@crxjs/vite-plugin` reemplaza `manifest.background` entero según la opción `browser` de `crx()`; nunca deja los dos campos a la vez, así que un solo manifest no alcanza. `vite.config.ts` decide `browser` y `outDir` por `mode`, y `manifest.config.ts` es función de ese mismo `env` para la forma de `background` |
+| `manifest.config.ts` pasa de objeto a función `(env) => ({...})` | Es lo que permite que la forma de `background` dependa de a qué navegador apunte el build, sin el cast que hacía falta cuando se intentó meter `service_worker` y `scripts` en el mismo objeto estático |
+| La pausa es de cada archivo (`QueueStatus: "paused"`), no una bandera de la cola | Una bandera global (`QueueState.paused`) era justo el bug: pausar el curso A dejaba el curso B sin poder arrancar hasta reanudar el A a mano. `claimNext` solo mira si hay algo `"active"`, y un archivo pausado no lo es, así que deja de bloquear a los que vienen detrás |
+| Reanudar relanza desde cero, no continúa donde se quedó | Seguir de verdad exigiría que Moodle o Drive acepten una petición por rango bien después de la pausa, sin comprobar. `retryQueue` ya restaba desde cero ante un fallo del servidor; reanudar sigue el mismo criterio ya probado en vez de uno nuevo sin probar |
+| Reanudar cancela y borra del historial la descarga vieja antes de relanzar | Si se abandona sin cancelar, esa entrada nunca pasa por el cierre normal de `settle` —el que borra la anotación del historial— y se queda ahí con el token pegado a la URL, a la vista en `chrome://downloads`. Es la regla 4 en un sitio nuevo |
+| «Pausar» y «Seguir descargando» dejan de ser el mismo botón según una bandera | Con la pausa por archivo pueden coexistir un archivo bajando —al que pausar tiene sentido— y otro en pausa de antes —al que reanudar tiene sentido—. Un solo botón que se turnaba por una bandera global ocultaría uno de los dos casos |
 
 ---
 
 ## Pendiente de resolver
 
+- [ ] **Volver a probar la exploración de Drive en los dos cursos afectados**
+      (`1582 DIRECCION DE PERSONAS`, `2016 GESTION DE PROYECTOS`) con el fix
+      de `exploreCourseDrive` ya en `dist/`. Debería encontrar los 16
+      enlaces, no solo 1
+- [ ] **Confirmar si el segundo bug —la descarga que no deja fila— sigue
+      pasando después de ese fix.** La hipótesis de Elis es que era un efecto
+      colateral: con la mayoría de enlaces perdidos en silencio, "1 archivo"
+      podía ser un estado ya raro de por sí. Si se repite, el siguiente paso
+      es añadir `console.log` temporal en el handler del botón
+      (`DrivePanel.tsx`) y en `enqueue()` (`background/downloads.ts`), no
+      antes: revisados los dos ahora y no se encontró ningún descarte en
+      silencio para un archivo real, así que sin una reproducción de verdad
+      no hay más que investigar por lectura de código
+- [x] ~~**Elegir la variante del texto del modal de donación.**~~ La C, «Ya
+      que estás por aquí», elegida por Elis el 7 de septiembre de 2026 entre
+      las tres. Puesta en `DonationModal.tsx`
+- [ ] **Probar el navbar, los toasts y el modal de donación cargando la
+      extensión de verdad**, no solo con las capturas estáticas del CSS
+      compilado. En particular: que el modal dispare de verdad a los dos
+      minutos y justo tras una descarga, y que no vuelva a salir si se
+      recarga la misma pestaña de la interfaz antes de cerrarla del todo
+      —el estado vive en memoria de React, así que un recarga de la
+      pestaña sí lo resetea; solo no se repite mientras la pestaña siga
+      abierta sin recargar—
 - [x] ~~**`.gitignore` es un directorio, no un archivo.**~~ Resuelto:
       `git check-ignore -v .env` devuelve `.gitignore:1:.env`.
 - [ ] **Correr la Fase 2 contra la cuenta real.** Escrita y en verde, pero sin
@@ -491,9 +607,42 @@ detalle completo está en `domain.md` §2.
       vacío en los 11 cursos el 5 de septiembre de 2026. Se resuelve corriendo
       el diagnóstico a partir del 6 de octubre. **De esto depende la pieza de
       retroalimentación de la Fase 1b**
-- [ ] **Elegir licencia.** AMO obliga a declarar una y el repositorio no tiene
-      `LICENSE`. Sin ella, «código abierto para que cualquiera lo verifique»
-      es cierto de hecho pero no de derecho
+- [x] ~~**Elegir licencia.**~~ MIT, decidida por Elis el 7 de septiembre de
+      2026. `LICENSE` en la raíz, referenciada desde `README.md` y desde
+      `package.json` (`"license": "MIT"`)
+- [x] ~~**Añadir `browser_specific_settings.gecko.id`.**~~ Hecho el 7 de
+      septiembre de 2026. `suki.com.pe` **no existe** —WHOIS oficial de
+      NIC.PE, `Domain Status: No Object Found`, comprobado por socket directo
+      al puerto 43 porque no había `whois` instalado—, así que en vez de un
+      id con forma de correo en un dominio que nadie tiene registrado se usó
+      un UUID: `{16b473de-2512-4882-b610-319e856625d4}`. Es el otro formato
+      que Firefox acepta explícitamente y no insinúa un dominio que no existe
+- [x] ~~**Añadir `gecko.data_collection_permissions`.**~~ Hecho el mismo día:
+      `{ required: ["none"] }`, junto al `gecko.id` en el mismo bloque
+- [x] ~~**`background.scripts` como respaldo de `background.service_worker`,
+      para Firefox.**~~ Resuelto el 7 de septiembre de 2026, con **dos
+      builds** en vez de un manifest con los dos campos —eso no funcionaba,
+      ver más abajo—: `pnpm build` (Chrome/Brave → `dist/`,
+      `service_worker`) y `pnpm build:firefox` (Firefox → `dist-firefox/`,
+      `scripts`). `vite.config.ts` decide `browser` según `mode` (Vite lee
+      `--mode firefox` del script `build:firefox`) y pasa `outDir` a juego;
+      `manifest.config.ts` pasó de objeto estático a función
+      `(env) => ({...})` que refleja la misma decisión para la forma de
+      `background` —sin necesitar ningún cast, porque ahora cada rama del
+      condicional tiene la forma exacta que `defineManifest` espera—.
+      `eslint.config.js` necesitó `dist-firefox` en `ignores` junto a `dist`,
+      que estaba a mano y no por patrón. `web-ext lint -s dist-firefox`:
+      **cero errores** — `BACKGROUND_SERVICE_WORKER_NOFALLBACK` ya no
+      aparece, y tampoco los dos que se habían resuelto antes
+      (`ADDON_ID_REQUIRED`, `MISSING_DATA_COLLECTION_PERMISSIONS`). Quedan
+      dos avisos de `innerHTML`, de React empaquetado, no de código propio
+- [ ] **Probar el flujo de conexión y una descarga real, en Chrome y en
+      Firefox, contra la cuenta real de ISIL.** Decisión de Elis: lo corre él,
+      a mano, ahora que `dist-firefox/` instala limpio según `web-ext lint`.
+      No relanzar la prueba pesada en Firefox desde una sesión de Claude en
+      esta máquina sin que él la lance manualmente —ver la nota de memoria
+      más abajo—. Es la única pieza que falta para saber si
+      `webextension-polyfill` hace falta de verdad
 - [ ] **Decidir el título de la ficha de tienda** y, si se acepta el que se
       recomienda, aplicarlo en `manifest.config.ts` y `package.json`
 - [ ] **Hacer las cinco capturas** de `context/tienda.md`, a 1280 × 800 y sin
@@ -518,6 +667,16 @@ detalle completo está en `domain.md` §2.
   sí funciona**, que además es el navegador objetivo.
 - El service worker de MV3 se duerme a los ~30 s. Para depurarlo hay que
   despertarlo (abrir la interfaz) antes de engancharse.
+- **La máquina se queda sin memoria con Firefox de prueba abierto.** Pasó el
+  7 de septiembre de 2026: con Brave del propio Elis ya abierto (decenas de
+  procesos `renderer`) y VS Code con el servidor de lenguaje de Java
+  corriendo, la memoria disponible ronda 500-700 MB. Un `web-ext run` con
+  Firefox headless más un servidor Python auxiliar bastó para que el
+  sistema matara procesos por falta de memoria. **No relanzar pruebas de
+  Firefox con `web-ext run` (ni nada que abra un navegador de verdad) desde
+  una sesión de Claude en esta máquina sin que Elis las lance él mismo** y
+  sepa que va a pasar. Si hace falta comprobar algo de Firefox sin abrirlo,
+  `web-ext lint -s dist` es liviano y no tiene este problema.
 
 ---
 
@@ -818,3 +977,344 @@ sección del README: Chrome Web Store pide una **URL** de política de
 privacidad y un ancla dentro del README no vale. Los dos van en registro
 formal, que es lo que pide la skill de voz para un documento legal; el README
 se queda con su versión cercana y enlaza a los dos. 210 tests.
+
+**2026-09-07 · 09:45** — Cerradas las cuatro correcciones que pidió Elis sobre
+la tanda anterior de documentación.
+
+**1 · Manifest huérfano borrado.** El `manifest.json` de la raíz —el mismo que
+se había commiteado vacío por accidente— tenía desde antes de esta tanda un
+`browser_specific_settings.gecko.id` escrito a mano, sin ningún efecto real:
+`@crxjs/vite-plugin` lo ignora explícitamente. Se borró. Verificado sin
+comprometer nada del historial: `git stash create` genera un commit
+desechable con el estado actual del árbol de trabajo, sin mover `HEAD` ni la
+rama, y un `git archive` sobre ese commit confirma que `manifest.json` ya no
+aparece. El `.zip` de código fuente para AMO deja de tener el archivo
+contradictorio que `docs/SOURCE_SUBMISSION.md` advertía.
+
+**2 · Probado en Firefox de verdad, y salió un bloqueo real.** Con `web-ext`
+—instalado vía `npx`, no estaba en el proyecto— y Firefox 153 en modo
+`--headless`. Dos hallazgos, y el primero cambia el plan:
+
+- **El manifest tal como está no instala en Firefox, y no es un problema de
+  `chrome.*` sin polyfill.** Falla antes de que corra una sola línea de
+  `src/`: `background.service_worker is currently disabled. Add
+  background.scripts.` Firefox tiene el service worker de MV3 detrás de un
+  flag desactivado por defecto (`extensions.backgroundServiceWorker.enabled`,
+  confirmado extrayendo la cadena del propio binario) y exige un
+  `background.scripts` de respaldo, que el manifest no tiene. `web-ext lint`
+  ya lo marcaba como error (`BACKGROUND_SERVICE_WORKER_NOFALLBACK`) junto con
+  otro más serio: `ADDON_ID_REQUIRED`, que dice que un `gecko.id` ya no es
+  "algún día" sino obligatorio ahora para cualquier manifest V3 en Firefox.
+  Ninguno de los dos se corrigió: son cambios de `manifest.config.ts`, y esta
+  tanda era de documentación más las cuatro correcciones puntuales que pidió
+  Elis, no una carta abierta para tocar el manifest. Quedan en pendientes,
+  con el criterio a decidir por Elis.
+- **Una vez sorteado ese bloqueo —parcheando solo `dist/manifest.json`, el
+  artefacto de build, nunca `manifest.config.ts`, solo para poder seguir
+  probando—, lo que sí se pudo verificar salió bien.** El módulo del service
+  worker evalúa entero sin lanzar —lo que ya dice que
+  `chrome.webRequest.onBeforeRedirect.addListener(...)` no truena al
+  registrarse—, y `chrome.storage.local.set/get/remove` funciona igual que en
+  Chrome, sin ningún rastro de necesitar `webextension-polyfill`. Un intento
+  de mensajería propio (el background enviándose un mensaje a sí mismo) salió
+  mal, pero es un artefacto de la prueba y no una señal real: `runtime.
+  sendMessage` no entrega al mismo contexto que lo envía, en ningún
+  navegador, y la arquitectura real nunca hace eso —es la pestaña de la
+  interfaz la que le habla al background, dos contextos distintos—. Y
+  `chrome.downloads.download()` rechazó una URL `data:`, que es una
+  restricción propia de Firefox y documentada (bug 1247919 de Mozilla), y
+  tampoco es una señal real: el código de verdad nunca le pasa un `data:` a
+  esa función, solo URLs `https://`.
+- **Lo que no se llegó a probar:** el flujo real UI → background —abrir la
+  pestaña de la interfaz de verdad y ver si consigue hablar con el
+  background, que es la arquitectura real y la prueba que de verdad importa—
+  y una descarga con una URL `https://` real. Se montó un servidor local
+  mínimo para recibir el reporte de la sonda sin depender de la cuenta real
+  de ISIL, y a mitad de la segunda tanda la máquina —que es el equipo de
+  Elis, no un entorno aislado— llegó al límite de memoria y mató el proceso
+  del servidor. Se decidió no reintentarlo: ya había un Firefox suelto de la
+  corrida anterior consumiendo memoria de más, se mató, y se prefirió no
+  arriesgar una segunda vez sobre una máquina con el navegador y el editor
+  del propio Elis ya abiertos, en vez de forzarlo. **Sin cuenta real de ISIL,
+  tampoco se podía completar el flujo de conexión de verdad ni una descarga
+  de un curso real**, así que esa parte queda pendiente de todos modos y la
+  tiene que correr Elis.
+
+  **Con lo que sí se probó, la recomendación es no añadir
+  `webextension-polyfill` todavía.** Cero señales de que `chrome.*` se
+  comporte distinto en Firefox de lo que se ve en Chrome, en todo lo que se
+  llegó a ejercitar. Lo que bloquea Firefox hoy es el manifest, no el código.
+  `context/project.md` no se tocó: la mención de "Firefox casi gratis" sigue
+  en pie porque nada de lo probado la contradice, pero la frase sigue sin
+  verificación completa hasta que alguien corra el flujo entero contra una
+  cuenta real.
+
+**3 · Licencia MIT.** `LICENSE` en la raíz, texto estándar sin modificar —una
+versión no estándar puede confundir a las herramientas que detectan la
+licencia automáticamente, GitHub incluido—. `"license": "MIT"` en
+`package.json`. Referenciada desde el README, con una aclaración que no sobra:
+la licencia cubre el código, no el nombre de ISIL, que no es de este proyecto
+para licenciar.
+
+**4 · `domain.md` §2 corregido.** La tercera razón que daba para
+`host_permissions` sobre `platform.ecala.net` —"las descargas de
+`pluginfile.php` de la Fase 2 también"— se contradecía con lo que el propio
+documento establece más abajo, en §6: `chrome.downloads.download` no exige
+permiso de host sobre la URL que descarga. La razón real que faltaba era otra:
+la foto de perfil (`webservice/pluginfile.php`, `src/api/avatar.ts`) es un
+`fetch` de la extensión, no una descarga, y a diferencia de `server.php` no
+está verificado que responda `Access-Control-Allow-Origin: *`, así que ahí el
+permiso de host puede sostener la lectura de verdad y no ser solo un respaldo.
+`docs/PERMISSIONS.md` se ajustó en el mismo sentido para que los dos
+documentos usen el mismo criterio.
+
+**Herramientas nuevas usadas, sin quedar instaladas en el proyecto:**
+`web-ext` (linter y runner oficial de Mozilla, vía `npx`) para el lint y la
+carga real en Firefox.
+
+**2026-09-07 · 10:30** — Las tres ediciones a `manifest.config.ts` que Elis
+aprobó tras el resumen anterior, y un hallazgo que cambia el plan de una de
+ellas.
+
+**El `gecko.id` no usa `suki.com.pe`.** Elis pidió confirmar que el dominio
+existiera antes de usarlo. No existe: consultado el WHOIS oficial de NIC.PE
+por socket directo al puerto 43 —no había `whois` instalado—, devuelve
+`Domain Status: No Object Found`. En su lugar, un UUID:
+`{16b473de-2512-4882-b610-319e856625d4}`, el otro formato que Firefox acepta
+para este campo y que no reclama un dominio de nadie. Junto con él,
+`gecko.data_collection_permissions: { required: ["none"] }`, tal como pidió
+Elis: no hay servidor propio que recoja nada.
+
+**El `background.scripts` de respaldo no se pudo escribir en
+`manifest.config.ts`, y no por falta de intento.** Se escribió el campo —con
+un cast, porque el tipo de `defineManifest` no admite `service_worker` y
+`scripts` a la vez— y compiló. Pero el manifest que sale de `pnpm build` no lo
+llevaba. La razón está en el propio `@crxjs/vite-plugin`: el hook
+`renderCrxManifest`, en el plugin `crx:background-loader-file`
+(`dist/index.mjs` del paquete), **reemplaza `manifest.background` entero**
+por `{service_worker, type}` o por `{scripts, type}` según una opción
+`browser` que se le pasa a `crx()` en `vite.config.ts` —por defecto
+`"chrome"`—, nunca por los dos a la vez. Lo que se escribiera en
+`manifest.config.ts` para `scripts` no iba a sobrevivir el build pasara lo
+que pasara, y seguir insistiendo con variaciones del mismo archivo no lo iba
+a arreglar: es un límite del plugin, no de la sintaxis. Se retiró el campo
+—dejarlo habría sido peor que no tenerlo, porque parece que hace algo y no
+hace nada— y se dejó un comentario largo explicando el porqué, con las dos
+salidas reales: una segunda pasada de build con `browser: "firefox"` (dos
+manifests, dos carpetas), o un paso posterior al build que le pegue `scripts`
+al `dist/manifest.json` ya generado. Las dos tocan `vite.config.ts` y son una
+decisión de arquitectura del build —qué comando produce qué, y cuál salida
+va a cada tienda—, así que se quedaron sin aplicar en vez de decidirlas por
+cuenta propia.
+
+`web-ext lint -s dist` después del cambio: **un solo error**,
+`BACKGROUND_SERVICE_WORKER_NOFALLBACK`, que es justo el pendiente de arriba.
+`ADDON_ID_REQUIRED` y `MISSING_DATA_COLLECTION_PERMISSIONS` ya no aparecen.
+Quedan dos avisos de `UNSAFE_VAR_ASSIGNMENT` sobre `innerHTML`, que no salen
+de `src/`: los cinco usos de `innerHTML` en el bundle de la interfaz vienen de
+React empaquetado, no de código propio. `typecheck`, `lint`, `test` (210) y
+`build` en verde.
+
+**No se relanzó la prueba pesada de Firefox.** Elis pidió no reintentarla sin
+que él la lance a mano, y de todas formas ahora es su turno: corre él el
+flujo de conexión y una descarga real contra su cuenta de ISIL, en Chrome y
+en Firefox. Anotado en «Notas de entorno» el aviso de memoria para la próxima
+vez, con lo que se vio: Brave y VS Code de Elis ya dejan la máquina en
+500-700 MB disponibles, y un `web-ext run` con Firefox headless basta para
+que el sistema mate procesos.
+
+**2026-09-07 · 11:15** — `background.scripts` resuelto con dos builds
+separados, como pidió Elis explícitamente en vez del parche posterior al
+build que se había dejado como alternativa.
+
+`vite.config.ts` pasó de un objeto estático a una función de `mode`: decide
+`browser` —`"firefox"` cuando el modo es `firefox`, `"chrome"` en cualquier
+otro caso, así que `pnpm dev` no cambia— y con él, `outDir`. `crx({ manifest,
+browser })` es la opción que el propio plugin ya traía para esto
+(`@crxjs/vite-plugin`, tipo `Browser = 'firefox' | 'chrome'`); no hacía falta
+inventar nada, solo usarla.
+
+`manifest.config.ts` tuvo que dejar de ser un objeto y pasar a ser una
+función `(env) => ({...})`, porque `defineManifest` también acepta esa forma
+—`ManifestV3Define`, ya estaba en sus tipos— y es la única manera de que
+`background` salga con la forma correcta en cada build sin escribir las dos a
+la vez en el mismo objeto: ahora cada rama del condicional (`service_worker`
+para Chrome, `scripts` para Firefox) es exactamente lo que `defineManifest`
+espera, así que **el cast que hizo falta en la tanda anterior ya no hace
+falta**. El resto del manifest —permisos, iconos, `browser_specific_settings`
+con el `gecko.id` y `data_collection_permissions`— es igual para los dos
+builds y se queda fuera del condicional.
+
+Un efecto colateral que no se veía venir: `eslint.config.js` ignoraba `dist`
+por nombre literal, no por patrón, así que en cuanto apareció `dist-firefox/`
+el lint intentó analizar el bundle minificado como si fuera código propio y
+tiró 1116 errores. Se añadió `dist-firefox` a la lista de `ignores`, al lado
+de `dist`.
+
+`docs/SOURCE_SUBMISSION.md` reescrito para que todo apunte a
+`dist-firefox/` y a `pnpm build:firefox`, que es lo que de verdad se sube a
+AMO; de paso se retiró la sección sobre el `manifest.json` huérfano de la
+raíz, que ya no existe —se borró en la tanda anterior— y ya no aportaba nada.
+`docs/PERMISSIONS.md` ganó una nota de que hay dos manifests generados y que
+la tabla de permisos aplica a los dos por igual, porque `permissions` y
+`host_permissions` no dependen del navegador. `README.md` y `CLAUDE.md`
+llevan ahora los dos comandos de build y las dos rutas de instalación,
+Chrome/Brave y Firefox por separado.
+
+`web-ext lint -s dist-firefox`: **cero errores.** Los tres que había al
+empezar el día —`BACKGROUND_SERVICE_WORKER_NOFALLBACK`,
+`ADDON_ID_REQUIRED`, `MISSING_DATA_COLLECTION_PERMISSIONS`— están resueltos
+los tres. Quedan dos avisos de `innerHTML` que vienen de React empaquetado,
+no de `src/`. `typecheck`, `lint`, `test` (210), `pnpm build` y
+`pnpm build:firefox` en verde, los dos comprobados desde cero.
+
+**No se relanzó la prueba pesada de Firefox**, tal como pidió Elis: la corre
+él mismo ahora que el lint sale limpio.
+
+**2026-09-07 · 12:00** — Tres ajustes de UI que pidió Elis: navbar en una
+fila, avisos que ya no se pueden ignorar, y un modal de donación. Detalle
+completo en «Hecho · Interfaz». Nada de esto tocó `src/api/`,
+`src/background/` ni el parsing de Drive —se leyeron los componentes reales
+antes de escribir nada, como pidió—.
+
+Lo nuevo que no era obvio: `.velo`/`.modal` estaban en `ui.css` desde el
+principio, copiados de la skill, y nadie los había usado —este es el primer
+modal real de la extensión—, así que les faltaba el centrado. Y el intento
+más simple de probar el toast de fallo de descarga —el propio background
+enviándose un mensaje— habría sido el error equivocado otra vez: se aprendió
+en la tanda de Firefox que eso no refleja la arquitectura real, así que aquí
+se fue directo a la fuente correcta, `useQueue()`.
+
+Verificado con capturas estáticas del CSS compilado, enviadas a Elis; no se
+cargó la extensión en un navegador de verdad porque la máquina seguía baja
+de memoria tras la prueba de Firefox de la mañana. Elis eligió la variante
+C del texto del modal, «Ya que estás por aquí», nada más ver las capturas.
+Queda pendiente que lo pruebe cargado de verdad.
+
+**2026-09-07 · 13:30** — Bug real encontrado y corregido: la exploración de
+Drive perdía en silencio la mayoría de los enlaces de dos cursos, sin dejar
+ningún rastro.
+
+**El diagnóstico de la ronda anterior sobre el parser de Moodle no era el
+bug** —Elis lo descartó con una captura real de la carpeta de Drive— y el
+segundo intento fue directo al scraper. Se confirmó **sin pedirle nada a
+Elis**: `~/Descargas/IsilHelper/` está en esta misma máquina, y el
+`metadata.json` que ya genera la extensión trae la URL completa de cada
+enlace de Drive del curso. Con eso:
+
+- `1582 DIRECCION DE PERSONAS (VIR)` y `2016 GESTION DE PROYECTOS (SPR)`
+  —los dos cursos afectados, los dos con solo `metadata.json` en disco y
+  nada de contenido bajado— tienen **14 de 16 enlaces de Contenidos en forma
+  `https://drive.google.com/open?id=<id>`**, y 2 en `/drive/folders/<id>`.
+- `3684 ANALISIS Y DISEÑO DE SISTEMAS BASICO (PRE)` —que bajó sus 15 PPTX sin
+  problema— tiene los 16 en `/drive/folders/<id>`, cero `open?id=`.
+
+Probado el clasificador real (`classifyDriveUrl`) contra esas URLs exactas:
+`open?id=` cae en `kind: "ambiguous"`, tal como está pensado. El bug no
+estaba en clasificar mal —eso ya lo cubría un test—, estaba en lo que
+`exploreCourseDrive` hacía con un `ambiguous` de curso: lo trataba como
+archivo suelto sin preguntarle nada a Drive, y si no resolvía a una URL de
+descarga lo descartaba **sin petición, sin problema registrado, sin ningún
+rastro**. Es justo lo que `domain.md` §6 llevaba un día diciendo que había
+que evitar («los ambiguos hay que resolverlos consultando a Drive... tratarlos
+como archivo por defecto falla») sin que el código lo hiciera todavía.
+
+**No es un problema de modalidad de curso** en el sentido de que Moodle
+organice distinto el contenido: es la vía que usó quien compartió la carpeta.
+`GESTION DE DISPOSITIVOS TECNOLOGICOS`, también «SPR», sí funcionaba —usaba
+enlaces normales—, así que la etiqueta VIR/SPR/PRE no predice nada por sí
+sola.
+
+**El fix**, en `exploreCourseDrive` (`src/background/drive.ts`): un
+`ambiguous` ahora se intenta recorrer como carpeta con `walkFolder`, igual
+que un `folder` de verdad. `embeddedfolderview` con un id que en realidad es
+de un archivo no tiene ningún `flip-entry`, así que produce una firma
+reconocible —cero carpetas leídas, cero archivos, un solo problema de tipo
+`shape`—; solo ahí se admite que era un archivo y se encola como tal.
+Cualquier otro resultado —contenido real, o un fallo genuino como `login`—
+se trata como una carpeta normal, con su problema si corresponde. La función
+gana un tercer parámetro `read: FolderReader`, inyectable solo para tests,
+con el mismo patrón que ya usa `walkFolder`.
+
+**No había ningún test de `exploreCourseDrive`** —el archivo de tests solo
+cubría los dos helpers puros, `driveFileName` y `drivePath`—, así que el
+bug pasó 210 tests sin que ninguno lo viera. Escritos 7 tests nuevos,
+incluido uno que reproduce la forma exacta de los dos cursos reales (16
+enlaces, 14 en `?id=`, ninguno se pierde). 217 en total.
+
+**El segundo bug —la descarga que no deja ninguna fila— se investigó sin
+tocar código**, como pidió Elis. El botón "Descargar 1 archivo" lee
+`result.files` del mismo render que pinta el número, así que no hay forma de
+que muestre "1" con un array vacío detrás: la hipótesis de datos obsoletos
+queda descartada. `enqueue()` tampoco tiene ningún descarte silencioso para
+un archivo nuevo: el único filtro es contra lo que ya está en la cola de esta
+sesión. Sin un bug visible en ninguno de los dos, y con la sospecha de Elis
+de que era un efecto colateral del bug de arriba, se dejó así: **sin
+`console.log` todavía**, a la espera de que se vuelva a probar con el fix de
+Drive puesto. Si se repite, el siguiente paso es logging temporal en esos
+dos puntos exactos, no antes.
+
+`typecheck`, `lint`, `test` (217) y los dos builds en verde. `domain.md` §6
+actualizado con la causa confirmada y el arreglo. Ningún archivo tocado
+fuera de `src/background/drive.ts` y su test.
+
+**2026-09-07 · 14:15** — Segundo bug de lógica confirmado y corregido: pausar
+una descarga bloqueaba la cola entera, no solo esa descarga.
+
+**La causa era literal.** `QueueState.paused` (`src/lib/storage.ts`) era una
+bandera booleana de la cola entera, y `claimNext()` la miraba antes de sacar
+cualquier archivo nuevo: `if (state.paused) return null;`. Pausar el archivo
+activo de un curso ponía esa bandera en `true`, y hasta que alguien la
+volviera a poner en `false` con "Seguir descargando", **nada** podía arrancar
+—ni el resto del mismo curso, ni un curso distinto encolado después—. Y aunque
+se hubiera quitado esa línea sola, el archivo pausado seguía marcado
+`status: "active"` en el modelo propio —pausar no lo cambiaba—, así que
+también habría seguido bloqueando por el otro filtro de `claimNext`
+(«no reservar nada mientras algo esté activo»). Hacían falta las dos cosas.
+
+**El arreglo:** `"paused"` pasa a ser un `QueueStatus` más, del archivo, no de
+la cola. `QueueState` pierde el campo `paused` por completo —vive ahora en
+`storage.ts` como comentario de por qué no está—. `claimNext` sigue sin
+reservar nada mientras haya un `"active"`, pero un `"paused"` no cuenta como
+tal, así que dos minutos después de pausar el curso A, el curso B arranca
+solo. `claimNext` tampoco toma nunca un `"paused"` como si fuera `"pending"`:
+un archivo pausado se queda pausado hasta que alguien lo reanuda a propósito,
+no en cuanto le toca el turno —si tomara lo que encuentra primero, se habría
+auto-reanudado sin que nadie lo pidiera, que es el error contrario al que se
+está corrigiendo—.
+
+**Reanudar cambió de forma, no solo de nombre.** Antes llamaba a
+`chrome.downloads.resume()` sobre el id pausado, confiando en seguir
+descargando desde donde se quedó. Ahora **cancela esa descarga vieja, la
+borra del historial, y relanza el archivo desde cero** —exactamente lo mismo
+que ya hacía `retryQueue` ante un fallo del servidor—. Dos motivos: preservar
+los bytes ya bajados exigiría que Moodle o Drive acepten una petición por
+rango bien después de la pausa, que no está comprobado en ningún sitio de
+este proyecto; y si se abandonara la descarga vieja sin cancelarla, esa
+entrada nunca pasaría por el cierre normal de `settle()` —el que borra la
+anotación del historial—, y se quedaría en `chrome://downloads` con el token
+pegado a la URL, sin que nada la limpiara. Es la regla 4 en un sitio donde no
+se había pensado, igual que pasó con el historial de descargas en la Fase 2.
+
+**La UI también tenía el mismo supuesto enterrado.** `Downloads.tsx` mostraba
+"Pausar" o "Seguir descargando" como si fueran las dos caras de una sola
+bandera —nunca a la vez—. Con la pausa por archivo, los dos pueden ser
+ciertos al mismo tiempo: algo bajando ahora mismo (tiene sentido pausarlo) y
+algo pausado de antes (tiene sentido reanudarlo). Los dos botones pasan a
+depender de condiciones independientes, y el aviso de "cola en pausa" se
+reescribe para decir lo que ahora es cierto: el resto de la cola sigue su
+curso, no está todo detenido.
+
+**El test que existía fosilizaba el bug.** Se llamaba «la pausa detiene la
+salida de nuevas descargas» —lo decía en el propio nombre— y comprobaba
+justo el comportamiento que había que arreglar. Se sustituyó por el
+escenario exacto que pidió Elis —pausar un curso, encolar uno distinto,
+confirmar que el segundo arranca solo—, más uno para reanudar (cancela lo
+viejo, relanza desde cero) y uno para pausar sin nada activo (no revienta).
+219 tests en total. `typecheck`, `lint` y los dos builds en verde.
+
+Archivos tocados: `src/lib/messages.ts`, `src/lib/storage.ts`,
+`src/background/downloads.ts` y su test, `src/ui/pages/Downloads.tsx`,
+`src/ui/components/QueueRow.tsx`, `src/ui/lib/downloads.ts` (nuevos conteos
+`active`/`paused` en `tally`). Nada en `src/api/` ni en la lógica de Drive o
+de Moodle.

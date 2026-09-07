@@ -94,7 +94,7 @@ function isFinished(item: QueueEntry): boolean {
 function toSnapshot(state: QueueState): QueueSnapshot {
   return {
     items: state.items.map(({ downloadId: _downloadId, ...item }) => item),
-    paused: state.paused,
+    paused: state.items.some((item) => item.status === "paused"),
     running: state.items.some((item) => !isFinished(item)),
   };
 }
@@ -275,11 +275,18 @@ async function settle(downloadId: number): Promise<boolean> {
 // Motor
 // --------------------------------------------------------------------------
 
-/** Reserva el siguiente archivo pendiente, si toca lanzarlo. */
+/**
+ * Reserva el siguiente archivo pendiente, si toca lanzarlo.
+ *
+ * Solo mira `"active"` para saber si hay algo en marcha, nunca una bandera de
+ * la cola entera: un archivo `"paused"` no cuenta como activo, así que no
+ * bloquea a los que vienen detrás. Y solo reserva `"pending"` —nunca
+ * `"paused"`—: un archivo en pausa se queda en pausa hasta que alguien lo
+ * reanude a propósito, no en cuanto le toque el turno.
+ */
 async function claimNext(): Promise<QueueEntry | null> {
   return serialize(async () => {
     const state = await readQueue();
-    if (state.paused) return null;
     if (state.items.some((item) => item.status === "active")) return null;
 
     const next = state.items.find((item) => item.status === "pending");
@@ -452,33 +459,68 @@ export async function queueSnapshot(): Promise<QueueSnapshot> {
   }
 
   // Si el worker murió con algo pendiente, esto lo reanuda al primer vistazo
-  // que eche la interfaz.
-  if (!state.paused && state.items.some((item) => item.status === "pending")) void pump();
+  // que eche la interfaz. Un archivo en pausa no cuenta como pendiente, así
+  // que esto nunca lo reanuda por su cuenta.
+  if (state.items.some((item) => item.status === "pending")) void pump();
 
   return toSnapshot(state);
 }
 
+/**
+ * Pausa el archivo activo, y solo ese.
+ *
+ * No es una bandera de la cola: es el `status` de este archivo en concreto,
+ * el único que estaba bajando en ese momento. Los demás —pendientes de este
+ * curso o de cualquier otro— no se enteran, y `claimNext` puede tomar el
+ * siguiente en cuanto lo haya, sin esperar a que nadie reanude nada.
+ */
 export async function pauseQueue(): Promise<QueueSnapshot> {
   const active = await serialize(async () => {
     const state = await readQueue();
-    state.paused = true;
+    const item = state.items.find((candidate) => candidate.status === "active");
+    if (item === undefined) return null;
+    item.status = "paused";
     await writeQueue(state);
-    return state.items.find((item) => item.status === "active")?.downloadId ?? null;
+    return item.downloadId;
   });
 
   if (active !== null) await chrome.downloads.pause(active).catch(() => undefined);
   return toSnapshot(await readQueue());
 }
 
+/**
+ * Retoma lo que esté en pausa.
+ *
+ * No continúa la descarga donde se quedó: se relanza desde el principio,
+ * igual que un reintento tras un fallo (`retryQueue`). Preservar los bytes ya
+ * bajados exigiría que Moodle o Drive acepten una petición por rango mucho
+ * después de la pausa, que no está comprobado, así que se prefiere lo simple
+ * y ya probado en el resto de la cola: la descarga vieja se cancela y se
+ * borra del historial —no puede quedarse ahí con el token pegado sin pasar
+ * nunca por el cierre normal de `settle`—, y el archivo vuelve a intentarse
+ * como si fuera la primera vez.
+ */
 export async function resumeQueue(): Promise<QueueSnapshot> {
-  const active = await serialize(async () => {
+  const abandoned = await serialize(async () => {
     const state = await readQueue();
-    state.paused = false;
+    const ids: number[] = [];
+    for (const item of state.items) {
+      if (item.status !== "paused") continue;
+      if (item.downloadId !== null) ids.push(item.downloadId);
+      item.status = "pending";
+      item.error = null;
+      item.received = 0;
+      item.downloadId = null;
+    }
     await writeQueue(state);
-    return state.items.find((item) => item.status === "active")?.downloadId ?? null;
+    return ids;
   });
 
-  if (active !== null) await chrome.downloads.resume(active).catch(() => undefined);
+  for (const id of abandoned) {
+    await chrome.downloads.cancel(id).catch(() => undefined);
+    await chrome.downloads.erase({ id }).catch(() => undefined);
+  }
+
   void pump();
   return toSnapshot(await readQueue());
 }

@@ -4,9 +4,15 @@
 
 ## Qué es IsilHelper
 
-IsilHelper es una extensión de navegador de código abierto, desarrollada por
-Suki, que permite a un estudiante descargar a su propio equipo el material
-académico al que su cuenta ya tiene acceso.
+IsilHelper es una extensión de navegador de código abierto que permite a un
+estudiante descargar a su propio equipo el material académico al que su
+cuenta ya tiene acceso.
+
+**La escribió un estudiante de ISIL, para el resto de sus compañeros.** Nació
+para archivar el propio material del autor antes de que el instituto cerrara
+el ciclo; se publica porque el problema —perder el acceso al material sin
+haberlo bajado a tiempo— lo tiene cualquier estudiante de ISIL, no solo él. Se
+distribuye bajo la marca **Suki**.
 
 ## Proyecto no oficial
 

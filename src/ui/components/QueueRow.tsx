@@ -13,6 +13,9 @@ import type { QueueItem, QueueStatus } from "../../lib/messages";
 const STATUS: Record<QueueStatus, { symbol: string; label: string; tone: string }> = {
   pending: { symbol: "·", label: "En cola", tone: "" },
   active: { symbol: "↓", label: "Bajando", tone: "estado--info" },
+  // Pausado es de este archivo, no de la cola entera: los demás siguen su
+  // curso mientras este espera a que lo reanuden a mano.
+  paused: { symbol: "‖", label: "En pausa", tone: "estado--advertencia" },
   done: { symbol: "✓", label: "Descargado", tone: "estado--exito" },
   skipped: { symbol: "=", label: "Ya lo tenías", tone: "estado--exito" },
   failed: { symbol: "!", label: "Falló", tone: "estado--error" },

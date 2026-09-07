@@ -20,7 +20,7 @@
 
 import { classifyDriveUrl, downloadUrl, exportExtension } from "../api/drive-links";
 import { fetchFolder, explainDriveError } from "../api/drive";
-import { walkFolder, type FoundFile, type WalkResult } from "../api/drive-walk";
+import { walkFolder, type FolderReader, type FoundFile, type WalkResult } from "../api/drive-walk";
 import { drivePath } from "../lib/paths";
 import type { DriveExploration, DriveProblemView, QueuedFile } from "../lib/messages";
 
@@ -61,34 +61,81 @@ function toProblemViews(result: WalkResult, moduleName: string): DriveProblemVie
  * No encola nada: solo mira. Encolar es una decisión del estudiante, y con un
  * recorrido que puede tardar minutos conviene enseñarle antes qué se encontró
  * y qué no se pudo leer.
+ *
+ * `read` es inyectable solo para los tests: por defecto pega contra Drive de
+ * verdad, con la misma pausa serializada que usa `walkFolder` para todo lo
+ * demás.
  */
 export async function exploreCourseDrive(
   courseName: string,
   links: DriveLinkInput[],
+  read: FolderReader = fetchFolder,
 ): Promise<DriveExploration> {
   const files: QueuedFile[] = [];
   const problems: DriveProblemView[] = [];
   let truncated = false;
   let foldersRead = 0;
 
+  const mergeWalk = (walk: WalkResult, link: DriveLinkInput): void => {
+    foldersRead += walk.foldersRead;
+    truncated = truncated || walk.truncated;
+    problems.push(...toProblemViews(walk, link.moduleName));
+    for (const found of walk.files) {
+      const queued = toQueuedFile(found, courseName, link);
+      if (queued !== null) files.push(queued);
+    }
+  };
+
+  const queueSingle = (id: string, kind: "file" | "native", app: FoundFile["app"], link: DriveLinkInput): void => {
+    const single = toQueuedFile({ id, name: null, kind, app, trail: [] }, courseName, link);
+    if (single !== null) files.push(single);
+  };
+
   for (const link of links) {
     const target = classifyDriveUrl(link.url);
 
-    // Un enlace suelto a un archivo o a un documento se encola sin recorrer
-    // nada: no toda entrada de Drive es una carpeta.
-    if (target.kind === "file" || target.kind === "native" || target.kind === "ambiguous") {
-      const single = toQueuedFile(
-        {
-          id: target.id,
-          name: null,
-          kind: target.kind === "ambiguous" ? "unknown" : target.kind,
-          app: target.kind === "native" ? target.app : null,
-          trail: [],
-        },
-        courseName,
-        link,
-      );
-      if (single !== null) files.push(single);
+    // Un enlace inequívoco a un archivo o a un documento se encola sin
+    // recorrer nada: `file` y `native` salen de una forma de URL que no deja
+    // duda (`/file/d/…`, `/document/d/…`…).
+    if (target.kind === "file" || target.kind === "native") {
+      queueSingle(target.id, target.kind, target.kind === "native" ? target.app : null, link);
+      continue;
+    }
+
+    if (target.kind === "ambiguous") {
+      // `domain.md` §6: un `?id=` a secas puede ser carpeta o archivo, y
+      // tratarlo como archivo por defecto falla. Antes de esta corrección
+      // era justo lo que pasaba aquí: se intentaba encolar como archivo
+      // suelto y, al no resolver a una URL de descarga, se descartaba en
+      // silencio —sin pedirle nada a Drive, sin dejar ningún problema
+      // registrado—. Confirmado contra datos reales el 7 de septiembre de
+      // 2026: dos cursos con 14 de 16 enlaces en forma `open?id=` perdían
+      // esos 14 así, sin ningún rastro en la exploración.
+      //
+      // Ahora se pregunta, que es lo que dice `domain.md`: se intenta
+      // recorrer como carpeta. `walkFolder` con una raíz que en realidad es
+      // un archivo produce una firma reconocible —cero carpetas leídas, cero
+      // archivos, un solo problema y de tipo `shape`—, porque
+      // `embeddedfolderview` no tiene ningún `flip-entry` que ofrecer para
+      // un id que no es una carpeta. Solo en ese caso exacto se admite que
+      // era un archivo y se encola como tal; cualquier otra cosa —contenido
+      // real, o un fallo de verdad como `login`— se trata igual que una
+      // carpeta normal, con su problema si corresponde.
+      const walk = await walkFolder(target.id, read);
+      const [onlyProblem] = walk.problems;
+      const idWasAFile =
+        walk.foldersRead === 0 &&
+        walk.files.length === 0 &&
+        walk.problems.length === 1 &&
+        onlyProblem !== undefined &&
+        onlyProblem.error.kind === "shape";
+
+      if (idWasAFile) {
+        queueSingle(target.id, "file", null, link);
+        continue;
+      }
+
+      mergeWalk(walk, link);
       continue;
     }
 
@@ -101,15 +148,7 @@ export async function exploreCourseDrive(
       continue;
     }
 
-    const walk = await walkFolder(target.id, (id) => fetchFolder(id));
-    foldersRead += walk.foldersRead;
-    truncated = truncated || walk.truncated;
-    problems.push(...toProblemViews(walk, link.moduleName));
-
-    for (const found of walk.files) {
-      const queued = toQueuedFile(found, courseName, link);
-      if (queued !== null) files.push(queued);
-    }
+    mergeWalk(await walkFolder(target.id, read), link);
   }
 
   return { files, problems, truncated, foldersRead };

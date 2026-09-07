@@ -1,6 +1,8 @@
+import { useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ask } from "./messaging";
-import type { FileView, QueueItem, QueuedFile, QueueSnapshot } from "../../lib/messages";
+import { useToasts } from "../store/toasts";
+import type { FileView, QueueItem, QueuedFile, QueueSnapshot, QueueStatus } from "../../lib/messages";
 
 /**
  * Lo que la interfaz necesita saber de la cola de descargas.
@@ -20,6 +22,59 @@ export function useQueue() {
     queryFn: () => ask({ type: "queue" }),
     refetchInterval: (query) => (query.state.data?.running === true ? REFRESH_MS : false),
   });
+}
+
+/**
+ * Un aviso emergente por cada archivo que **empieza** a fallar, sin
+ * repetirlo mientras se quede fallado.
+ *
+ * Se monta una sola vez, en la raíz de la aplicación, y no en la pantalla de
+ * Descargas: una descarga puede fallar mientras el estudiante está en otra
+ * pestaña de la extensión —encoló un curso entero y se fue a mirar sus
+ * pendientes—, y la fila roja de la cola no avisa de nada si no está
+ * mirando esa pantalla en ese momento. `useQueue()` ya comparte su caché
+ * entre quien la llame, así que montarlo aquí además de en `Downloads.tsx`
+ * no duplica ninguna petición.
+ */
+export function useDownloadFailureToasts(): void {
+  const queue = useQueue();
+  const pushToast = useToasts((state) => state.push);
+  // Último estado visto de cada ruta. Vive en un ref y no en estado de React
+  // porque no tiene que disparar un re-render por sí solo: solo importa
+  // dentro del efecto, para decidir si un fallo es nuevo.
+  const lastStatus = useRef(new Map<string, QueueStatus>());
+
+  useEffect(() => {
+    const items = queue.data?.items;
+    if (items === undefined) return;
+
+    const newlyFailed = items.filter(
+      (item) => item.status === "failed" && lastStatus.current.get(item.path) !== "failed",
+    );
+    for (const item of items) lastStatus.current.set(item.path, item.status);
+
+    if (newlyFailed.length === 0) return;
+
+    // Un fallo se nombra; varios a la vez —el token se cayó a mitad de una
+    // tanda larga, por ejemplo— se agrupan en un solo aviso: una pila de
+    // toasts idénticos es peor que uno que cuenta cuántos son.
+    const [only] = newlyFailed;
+    if (newlyFailed.length === 1 && only !== undefined) {
+      pushToast({
+        tone: "error",
+        title: `No se pudo descargar "${only.name}"`,
+        // `exactOptionalPropertyTypes` no deja pasar `detail: undefined`
+        // explícito: se omite la clave entera cuando no hay mensaje.
+        ...(only.error !== null ? { detail: only.error } : {}),
+      });
+    } else {
+      pushToast({
+        tone: "error",
+        title: `${newlyFailed.length} archivos no se pudieron descargar`,
+        detail: "Revisa la lista en Descargas para ver el motivo de cada uno.",
+      });
+    }
+  }, [queue.data, pushToast]);
 }
 
 /** Qué archivos de esta pantalla constan ya como descargados. Se pregunta por
@@ -101,6 +156,8 @@ export function tally(items: QueueItem[]) {
     done: items.filter((item) => item.status === "done").length,
     skipped: items.filter((item) => item.status === "skipped").length,
     failed: items.filter((item) => item.status === "failed").length,
+    paused: items.filter((item) => item.status === "paused").length,
+    active: items.filter((item) => item.status === "active").length,
     left: items.filter((item) => item.status === "pending" || item.status === "active").length,
   };
 }

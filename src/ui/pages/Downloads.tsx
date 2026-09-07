@@ -83,33 +83,40 @@ export default function Downloads() {
         <Notice
           tone="warning"
           symbol="!"
-          title="La cola está en pausa"
-          detail="Lo que ya se bajó se queda donde está. Puedes seguir cuando quieras,
-                  incluso después de cerrar esta pestaña."
+          title={`Tienes ${plural(counts.paused, "archivo en pausa", "archivos en pausa")}`}
+          detail="El resto de la cola sigue su curso: pausar uno no detiene los demás.
+                  Lo que ya se bajó se queda donde está, y esto puedes retomarlo cuando
+                  quieras, incluso después de cerrar esta pestaña."
         />
       )}
 
+      {/* Pausar y reanudar ya no son la misma pregunta: puede haber a la vez
+          un archivo bajando —al que pausar tiene sentido— y otro en pausa de
+          antes —al que retomar tiene sentido—. Antes de esto los dos botones
+          se turnaban con la misma bandera, que era justo lo que hacía que
+          pausar un curso bloqueara el siguiente. */}
       <div className="acciones">
-        {running &&
-          (paused ? (
-            <button
-              type="button"
-              className="btn btn--principal"
-              onClick={() => action.mutate({ type: "resumeQueue" })}
-              disabled={action.isPending}
-            >
-              Seguir descargando
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="btn btn--secundario"
-              onClick={() => action.mutate({ type: "pauseQueue" })}
-              disabled={action.isPending}
-            >
-              Pausar
-            </button>
-          ))}
+        {counts.active > 0 && (
+          <button
+            type="button"
+            className="btn btn--secundario"
+            onClick={() => action.mutate({ type: "pauseQueue" })}
+            disabled={action.isPending}
+          >
+            Pausar
+          </button>
+        )}
+
+        {paused && (
+          <button
+            type="button"
+            className="btn btn--principal"
+            onClick={() => action.mutate({ type: "resumeQueue" })}
+            disabled={action.isPending}
+          >
+            Seguir descargando
+          </button>
+        )}
 
         {counts.failed > 0 && (
           <button

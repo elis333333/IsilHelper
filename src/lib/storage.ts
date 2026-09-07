@@ -9,7 +9,11 @@ import type { QueueItem } from "./messages";
  *  Ese id es un detalle del worker y no cruza el contrato de mensajes. */
 export type QueueEntry = QueueItem & { downloadId: number | null };
 
-export type QueueState = { items: QueueEntry[]; paused: boolean };
+// No lleva un `paused` de la cola entera: la pausa es de cada `QueueEntry`
+// (`status: "paused"`), no del estado que se guarda aquí. Una bandera aparte
+// fue justo el bug que dejaba una cola entera bloqueada porque un archivo
+// —de cualquier curso— estuviera en pausa.
+export type QueueState = { items: QueueEntry[] };
 
 const TOKEN_KEY = "moodleToken";
 
@@ -107,12 +111,11 @@ const LOG_KEY = "downloadLog";
 export async function readQueue(): Promise<QueueState> {
   const stored = await chrome.storage.local.get(QUEUE_KEY);
   const value: unknown = stored[QUEUE_KEY];
-  if (typeof value !== "object" || value === null) return { items: [], paused: false };
+  if (typeof value !== "object" || value === null) return { items: [] };
 
   const record = value as Record<string, unknown>;
   return {
     items: Array.isArray(record.items) ? (record.items as QueueEntry[]) : [],
-    paused: record.paused === true,
   };
 }
 

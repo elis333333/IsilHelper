@@ -109,11 +109,73 @@
 }
 
 /* ---------- Modal ---------- */
-.velo   { position: fixed; inset: 0; background: rgb(13 13 13 / 0.7); }  /* sin desenfoque */
+.velo {
+  position: fixed; inset: 0; background: rgb(13 13 13 / 0.7);  /* sin desenfoque */
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--space-6); z-index: 50;
+}
 .modal  {
   background: var(--color-elevated); border: 1px solid var(--color-border);
-  border-radius: 0; max-width: 560px; padding: var(--space-8);
+  border-radius: 0; width: 100%; max-width: 560px; padding: var(--space-8);
 }
+
+/* ---------- Ventana de apoyo económico ----------
+   Mismo patrón que `.apoyo` del pie —QR a la izquierda, texto a la
+   derecha—, aquí dentro de un `.modal`. */
+.donacion { display: flex; flex-wrap: wrap; gap: var(--space-6); }
+.donacion__qr {
+  width: 160px; height: 160px; flex: 0 0 auto; display: block;
+  border: 1px solid var(--color-border);  /* fondo claro propio del QR: no se toca */
+}
+.donacion__cuerpo { min-width: 0; }
+.donacion__acciones { margin-top: var(--space-6); }
+
+/* ---------- Avisos (toast) ----------
+   Para lo que impide completar una acción y puede pasar sin que el
+   estudiante esté mirando ese rincón de la pantalla: se planta encima de
+   cualquier pantalla en vez de quedar como texto que hay que encontrar. */
+.toast-stack {
+  position: fixed;
+  right: var(--space-6);
+  bottom: var(--space-6);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: min(360px, calc(100vw - var(--space-8)));
+}
+
+.toast {
+  position: relative;
+  background: var(--color-elevated);
+  border: 1px solid var(--color-border);
+  padding: var(--space-4) var(--space-8) var(--space-4) var(--space-4);
+  animation: toast-entra var(--motion-base) var(--motion-ease);
+}
+
+@keyframes toast-entra {
+  from { opacity: 0; transform: translateY(var(--space-2)); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.toast__detalle {
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+}
+
+.toast__cerrar {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--color-text-subtle);
+  cursor: pointer;
+  line-height: 1;
+}
+.toast__cerrar:hover { color: var(--color-text); }
 
 /* ---------- Estados ----------
    Cada uno lleva ícono y texto además del color. */

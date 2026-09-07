@@ -90,18 +90,38 @@
 .cabecera {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  /* `baseline` alineaba el texto de los dos bloques por su línea de base, y
+     con tipografías de tamaño tan distinto —el H1 del logo contra el cuerpo
+     de la sesión— eso deja un bloque visiblemente más arriba que el otro.
+     `center` los centra en el mismo eje sin importar cuánto más alto sea
+     uno que el otro. */
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
   padding-bottom: var(--space-6);
   border-bottom: 1px solid var(--color-border);
 }
 
-/* Identidad de la sesión: la foto y, al lado, quién eres y tu correo. */
+/* Identidad de la sesión: la foto, quién eres y el botón de cerrar sesión,
+   los tres en fila. `flex-wrap` es la salvaguarda a un ancho angosto: que el
+   botón baje de línea dentro de este bloque es preferible a que reviente el
+   ancho de la cabecera. */
 .sesion {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-4);
+}
+
+.sesion__info { min-width: 0; }
+
+/* Nombre y correo van compactos, no con el cuerpo de un párrafo: `.parrafo`
+   trae `max-width: 65ch` y un margen inferior pensados para texto largo, y
+   aquí es una sola línea corta dentro de una fila de navbar. */
+.sesion__detalle {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
 }
 
 /* La foto de perfil. Cuadrada y con radio 0 como todo lo demás: el círculo es
@@ -382,6 +402,19 @@
   flex-wrap: wrap;
   margin-top: 0;
   margin-bottom: var(--space-6);
+}
+
+/* El botón principal de la fila —"Descargar todo el curso"— es más alto y
+   más ancho por sistema (`.btn--principal`: 48 px contra los 40 del
+   secundario), y al lado de "Guardar el índice" y "Ver descargas" esa
+   diferencia se ve como un botón que no cuadra con el resto en vez de una
+   jerarquía a propósito. El verde ya dice cuál es la acción principal; no
+   hace falta que el tamaño lo repita. Mismo criterio en el panel de Drive,
+   donde "Descargar N archivos" convive con "Ver qué hay en Drive". */
+.acciones--curso .btn--principal,
+.acciones--drive .btn--principal {
+  height: var(--control-alto);
+  padding-inline: var(--space-6);
 }
 
 /* Estado de "ya lo tienes", que sustituye al botón cuando no hay nada que

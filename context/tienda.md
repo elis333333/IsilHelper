@@ -140,7 +140,7 @@ TU INFORMACIÓN NO SALE DE TU EQUIPO
 · El código es abierto y cualquiera puede comprobar cada línea de lo anterior.
 
 Política de privacidad completa:
-https://github.com/elis333333/IsilHelper/blob/master/PRIVACY.md
+https://github.com/elis333333/IsilHelper/blob/main/PRIVACY.md
 
 QUÉ NO HACE
 
@@ -159,7 +159,7 @@ enseñarte una lista vacía como si estuviera completa. Aquí no se promete
 permanencia.
 
 Aviso legal completo:
-https://github.com/elis333333/IsilHelper/blob/master/LEGAL.md
+https://github.com/elis333333/IsilHelper/blob/main/LEGAL.md
 
 IsilHelper · un proyecto de Suki
 ```
@@ -169,7 +169,7 @@ IsilHelper · un proyecto de Suki
 Chrome Web Store la exige y hay que pegarla en la pestaña *Privacidad*:
 
 ```
-https://github.com/elis333333/IsilHelper/blob/master/PRIVACY.md
+https://github.com/elis333333/IsilHelper/blob/main/PRIVACY.md
 ```
 
 En esa misma pestaña hay que justificar cada permiso. Está resuelto: la tabla

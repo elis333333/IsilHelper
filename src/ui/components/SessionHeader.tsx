@@ -33,41 +33,34 @@ export function SessionHeader({ fullname, email, department, avatar, onDisconnec
         </h1>
       </div>
 
-      <div>
-        <div className="sesion">
-          {/* Decorativa a propósito: el nombre completo está escrito al lado,
-              así que anunciarla otra vez solo añade ruido al lector de
-              pantalla. */}
-          {avatar !== null ? (
-            <img className="avatar" src={avatar} alt="" width={40} height={40} />
-          ) : (
-            <span className="avatar avatar--iniciales" aria-hidden="true">
-              {initialsFrom(fullname)}
-            </span>
-          )}
+      {/* Una sola fila: la foto, el nombre compacto y el botón, alineados a
+          la derecha y en línea. Antes el botón caía en una fila propia con
+          `margin-top`, debajo de la sesión, y el bloque entero se veía como
+          dos piezas verticales descuadradas en vez de un navbar. */}
+      <div className="sesion">
+        {/* Decorativa a propósito: el nombre completo está escrito al lado,
+            así que anunciarla otra vez solo añade ruido al lector de
+            pantalla. */}
+        {avatar !== null ? (
+          <img className="avatar" src={avatar} alt="" width={40} height={40} />
+        ) : (
+          <span className="avatar avatar--iniciales" aria-hidden="true">
+            {initialsFrom(fullname)}
+          </span>
+        )}
 
-          <div>
-            <p className="estado estado--exito">
-              <span aria-hidden="true">✓</span>
-              <span>Conectado como {fullname}</span>
-            </p>
+        <div className="sesion__info">
+          <p className="estado estado--exito">
+            <span aria-hidden="true">✓</span>
+            <span>Conectado como {fullname}</span>
+          </p>
 
-            {details.length > 0 && (
-              <p
-                className="parrafo parrafo--apagado"
-                style={{ marginTop: "var(--space-1)", marginBottom: 0 }}
-              >
-                {details.join(" · ")}
-              </p>
-            )}
-          </div>
+          {details.length > 0 && <p className="sesion__detalle">{details.join(" · ")}</p>}
         </div>
 
-        <div className="acciones" style={{ marginTop: "var(--space-3)" }}>
-          <button type="button" className="btn btn--secundario" onClick={onDisconnect}>
-            Cerrar sesión
-          </button>
-        </div>
+        <button type="button" className="btn btn--secundario" onClick={onDisconnect}>
+          Cerrar sesión
+        </button>
       </div>
     </header>
   );

@@ -81,20 +81,50 @@ el botón.
 
 ## Instalar
 
-Todavía no está en las tiendas. Se carga sin empaquetar:
+Todavía no está en las tiendas. Se carga sin empaquetar, con Node 22 o
+superior y [pnpm](https://pnpm.io):
 
 ```
 git clone https://github.com/elis333333/IsilHelper && cd IsilHelper
 pnpm install
-pnpm build
 ```
 
-Luego, en Brave o Chrome: `chrome://extensions` → activa el **modo
+**Hay dos builds, uno por navegador**, porque Chrome y Firefox necesitan una
+forma distinta de declarar el service worker de la extensión —Firefox lo
+tiene detrás de un flag apagado por defecto y exige un respaldo que Chrome no
+usa— y un solo manifest no puede llevar las dos formas a la vez:
+
+```bash
+pnpm build            # Chrome y Brave → dist/
+pnpm build:firefox    # Firefox        → dist-firefox/
+```
+
+No hace falta ninguna variable de entorno ni ningún secreto para compilar
+ninguno de los dos: no hay backend, y nada en `vite.config.ts` ni en `src/`
+lee `process.env` o `import.meta.env`.
+
+**En Chrome o Brave:** `chrome://extensions` → activa el **modo
 desarrollador** → *Cargar sin empaquetar* → elige la carpeta `dist/`.
+
+**En Firefox:** `about:debugging#/runtime/this-firefox` → **Cargar
+complemento temporal** → elige `dist-firefox/manifest.json` (no
+`dist/manifest.json`: ese es el de Chrome, y Firefox lo rechaza). Se descarga
+al cerrar Firefox; hay que repetirlo en cada sesión de prueba.
 
 > Google Chrome de marca ignora `--load-extension` desde la línea de órdenes.
 > Para probar sin empaquetar usa **Brave**, o cárgala a mano desde
 > `chrome://extensions`.
+
+### Para quien revisa el código
+
+Si estás verificando el envío a Chrome Web Store o Firefox AMO: la
+justificación de cada permiso del manifest, con la llamada de código exacta
+detrás, está en [`docs/PERMISSIONS.md`](docs/PERMISSIONS.md). El bundle de
+producción sale minificado (Vite, con `esbuild`); los pasos exactos para
+reconstruirlo desde este código fuente —versión de Node derivada de las
+dependencias, `pnpm install --frozen-lockfile`, y cómo se empaquetó el `.zip`
+de código fuente— están en
+[`docs/SOURCE_SUBMISSION.md`](docs/SOURCE_SUBMISSION.md).
 
 ## Usar
 
@@ -165,13 +195,17 @@ dirá con claridad: aquí no se promete permanencia.
 El detalle —falta de afiliación, uso del nombre, responsabilidad del estudiante
 y ausencia de garantías— está en [LEGAL.md](LEGAL.md).
 
+**Código bajo licencia [MIT](LICENSE).** Eso es el código de la extensión —no
+el nombre de ISIL, que no es de nadie de este proyecto para licenciar.
+
 ---
 
 ## Desarrollo
 
 ```bash
-pnpm dev        # build en watch; se carga sin empaquetar desde dist/
-pnpm build      # producción
+pnpm dev             # build en watch para Chrome/Brave; se carga sin empaquetar desde dist/
+pnpm build           # producción, Chrome y Brave → dist/
+pnpm build:firefox   # producción, Firefox → dist-firefox/
 pnpm typecheck
 pnpm lint
 pnpm test
@@ -181,6 +215,12 @@ El contexto del proyecto vive en `context/`: `project.md` (qué se construye y
 en qué orden), `domain.md` (todo lo averiguado sobre la plataforma),
 `session.md` (dónde se quedó el trabajo) y `tienda.md` (los textos y las
 capturas de la ficha de tienda). Las convenciones, en `CONVENTIONS.md`.
+
+Documentación para la publicación en tienda: [`PRIVACY.md`](PRIVACY.md) y
+[`LEGAL.md`](LEGAL.md) son los documentos que enlazan Chrome Web Store y
+Firefox AMO; [`docs/PERMISSIONS.md`](docs/PERMISSIONS.md) justifica cada
+permiso del manifest y [`docs/SOURCE_SUBMISSION.md`](docs/SOURCE_SUBMISSION.md)
+explica cómo reproducir el build desde este código fuente.
 
 ---
 

@@ -56,12 +56,20 @@ cualquier componente. No inventes valores de diseño.
 ## Comandos
 
 ```bash
-pnpm dev        # build en watch, cargar sin empaquetar desde dist/
-pnpm build      # producción
+pnpm dev             # build en watch para Chrome/Brave, cargar sin empaquetar desde dist/
+pnpm build           # producción, Chrome y Brave → dist/
+pnpm build:firefox   # producción, Firefox → dist-firefox/
 pnpm typecheck
 pnpm lint
 pnpm test
 ```
 
-Para cargar la extensión: `chrome://extensions` → modo desarrollador → *Cargar
-sin empaquetar* → `dist/`.
+Dos builds porque Firefox exige `background.scripts` como respaldo de
+`background.service_worker` y un solo manifest no puede llevar los dos a la
+vez (`docs/SOURCE_SUBMISSION.md`).
+
+Para cargar la extensión:
+- Chrome o Brave: `chrome://extensions` → modo desarrollador → *Cargar sin
+  empaquetar* → `dist/`.
+- Firefox: `about:debugging#/runtime/this-firefox` → *Cargar complemento
+  temporal* → `dist-firefox/manifest.json`.

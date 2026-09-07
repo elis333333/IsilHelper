@@ -4,9 +4,11 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Extensión que le devuelve a los estudiantes de ISIL el control sobre su información académica",
+  "license": "MIT",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "build:firefox": "tsc --noEmit && vite build --mode firefox",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run"

@@ -98,9 +98,28 @@ en peticiones con credenciales**. Una llamada a `server.php` con
 | `admin/tool/mobile/launch.php` | **`include`** | Necesita `MoodleSession`; sin ella redirige al login |
 
 `https://platform.ecala.net/*` en `host_permissions` sigue siendo obligatorio,
-pero por otros tres motivos: `webRequest` solo observa URLs para las que hay
-permiso de host, `launch.php` va con credenciales y necesita la exención de
-CORS, y las descargas de `pluginfile.php` de la Fase 2 también.
+por dos motivos comprobados: `webRequest` solo observa URLs para las que hay
+permiso de host, y `launch.php` va con credenciales, que con `ACAO: *` mueren
+con `WildcardOriginNotAllowed` a menos que el permiso de host exima a esa
+petición de CORS.
+
+**La tercera razón que se citaba aquí —"y las descargas de `pluginfile.php`
+de la Fase 2 también"— estaba mal**, y se corrige el 7 de septiembre de 2026
+al escribir `docs/PERMISSIONS.md` para la ficha de tienda. Este mismo
+documento, más abajo en §6, ya había establecido el criterio que la
+contradice: `chrome.downloads.download` **no exige permiso de host** sobre la
+URL que descarga, sea de `platform.ecala.net` o de Drive. Bajar un archivo no
+es la razón.
+
+La tercera razón real es otra llamada, que sí es un `fetch` de la extensión y
+no una descarga por `chrome.downloads`: la foto de perfil
+(`webservice/pluginfile.php`, `src/api/avatar.ts`), con `credentials: "omit"`
+igual que `server.php`. A diferencia de `server.php`, **no está verificado
+que `pluginfile.php` responda `Access-Control-Allow-Origin: *`** —solo se
+midió esa cabecera sobre `server.php`—, así que ahí el permiso de host puede
+ser lo que de verdad sostiene la lectura y no solo un respaldo. Las llamadas a
+`server.php` en sí, con `ACAO: *` ya comprobado, funcionarían igual sin el
+permiso; se benefician de él sin depender de él.
 
 **Ante un 418: esperar y reintentar con espera creciente.** Nunca disparar
 ráfagas; mantener al menos 0.6 s entre peticiones.
@@ -345,6 +364,35 @@ requiere OAuth con la cuenta de ISIL.
 
 Los ambiguos hay que resolverlos consultando a Drive antes de decidir el método
 de descarga. Tratarlos como archivo por defecto falla.
+
+**Esto se escribió como principio el 6 de septiembre de 2026 y no se
+implementó hasta el 7, y en el intervalo era exactamente el bug que costó dos
+cursos enteros.** `exploreCourseDrive` (`src/background/drive.ts`) trataba
+`ambiguous` igual que `file`/`native`: como un archivo suelto que se encola
+sin preguntar nada. Cuando el id no resolvía a una URL de descarga válida, se
+descartaba en silencio —sin petición a Drive, sin dejar ningún problema
+registrado en la exploración—, así que el enlace desaparecía sin dejar
+rastro. Confirmado contra datos reales el 7 de septiembre de 2026: dos cursos
+(`1582 DIRECCION DE PERSONAS`, `2016 GESTION DE PROYECTOS`) tenían **14 de 16**
+enlaces de Contenidos en forma `https://drive.google.com/open?id=<id>`, y los
+14 se perdían así. Un curso que sí funcionaba (`3684 ANALISIS Y DISEÑO DE
+SISTEMAS BASICO`) tenía sus 16 enlaces en `/drive/folders/<id>`, la forma
+inequívoca — de ahí que el síntoma pareciera depender de la modalidad del
+curso cuando en realidad depende de qué vía usó quien compartió la carpeta.
+
+**Arreglado:** ahora un `ambiguous` se recorre como si fuera una carpeta.
+`embeddedfolderview` con un id que en realidad es de un archivo no tiene
+ningún `flip-entry` que ofrecer, así que `walkFolder` produce una firma
+reconocible —cero carpetas leídas, cero archivos, un solo problema de tipo
+`shape`—; solo en ese caso exacto se admite que era un archivo y se encola
+como tal. Cualquier otro resultado —contenido real, o un fallo genuino como
+`login`— se trata igual que una carpeta normal. Sigue habiendo un límite
+menor sin resolver: una entrada `ambiguous` **dentro** de una carpeta ya
+abierta (no un enlace de curso, sino un elemento del listado de
+`embeddedfolderview`) todavía se descarta igual que antes, porque en la
+práctica las entradas de un listado real siempre traen `href` en forma
+`/file/d/…` o `/folders/…`, nunca `?id=`. Si algún día aparece uno así, el
+mismo criterio aplicaría, pero hoy no está implementado ahí.
 
 **Los documentos nativos de Google** (Docs, Slides, Sheets) no son binarios: hay
 que exportarlos a PDF/DOCX/PPTX.

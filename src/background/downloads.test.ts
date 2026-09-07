@@ -25,6 +25,7 @@ let nextId: number;
 let listeners: Array<(delta: chrome.downloads.DownloadDelta) => void>;
 let removedFiles: number[];
 let erased: number[];
+let cancelled: number[];
 
 function file(path: string, url = "https://platform.ecala.net/webservice/pluginfile.php/1/a.pdf"): QueuedFile {
   return {
@@ -56,6 +57,7 @@ beforeEach(() => {
   listeners = [];
   removedFiles = [];
   erased = [];
+  cancelled = [];
   nextId = 1;
 
   const chromeDouble = {
@@ -94,6 +96,10 @@ beforeEach(() => {
       },
       removeFile: (id: number) => {
         removedFiles.push(id);
+        return Promise.resolve();
+      },
+      cancel: (id: number) => {
+        cancelled.push(id);
         return Promise.resolve();
       },
       pause: () => Promise.resolve(),
@@ -246,23 +252,66 @@ describe("cola de descargas", () => {
     expect(snapshot.running).toBe(false);
   });
 
-  it("la pausa detiene la salida de nuevas descargas", async () => {
+  it("pausar una descarga en curso no bloquea que arranque una nueva de otro curso", async () => {
+    // El bug exacto que reportó Elis: pausar el curso A dejaba el curso B
+    // atascado hasta reanudar el A a mano. La pausa es de este archivo, no
+    // de la cola entera.
     store.moodleToken = "<TOKEN>";
     const queue = await load();
 
-    await queue.enqueue([
-      file("IsilHelper/Curso/Sección/a.pdf"),
-      file("IsilHelper/Curso/Sección/b.pdf"),
-    ]);
+    await queue.enqueue([file("IsilHelper/Curso A/Contenidos/a.pdf")]);
+    await vi.runAllTimersAsync();
+    expect(downloads).toHaveLength(1);
+
+    await queue.pauseQueue();
+
+    // Un curso distinto, encolado después de pausar el primero. No hace
+    // falta reanudar nada para que esto arranque.
+    await queue.enqueue([file("IsilHelper/Curso B/Complementario/b.pdf")]);
+    await vi.runAllTimersAsync();
+
+    expect(downloads).toHaveLength(2);
+    expect(downloads[1]?.state).toBe("in_progress");
+
+    const snapshot = await queue.queueSnapshot();
+    expect(snapshot.items[0]?.status).toBe("paused");
+    expect(snapshot.items[1]?.status).toBe("active");
+    // La pausa se ve, pero ya no es "toda la cola detenida": solo cuenta el
+    // archivo que de verdad está en pausa.
+    expect(snapshot.paused).toBe(true);
+    expect(snapshot.running).toBe(true);
+  });
+
+  it("pausar sin nada activo no revienta y no pausa nada", async () => {
+    store.moodleToken = "<TOKEN>";
+    const queue = await load();
+
+    const snapshot = await queue.pauseQueue();
+    expect(snapshot.paused).toBe(false);
+  });
+
+  it("reanudar retoma lo pausado desde cero, cancelando el intento viejo", async () => {
+    // No continúa donde se quedó: se relanza, igual que un reintento. El
+    // intento viejo se cancela y se borra del historial para que no se quede
+    // ahí con el token pegado sin pasar por el cierre normal.
+    store.moodleToken = "<TOKEN>";
+    const queue = await load();
+
+    await queue.enqueue([file("IsilHelper/Curso/Sección/a.pdf")]);
     await vi.runAllTimersAsync();
     await queue.pauseQueue();
-    await finish({});
-
-    expect(downloads).toHaveLength(1);
 
     await queue.resumeQueue();
     await vi.runAllTimersAsync();
+
+    expect(cancelled).toEqual([1]);
+    expect(erased).toContain(1);
     expect(downloads).toHaveLength(2);
+    expect(downloads[1]?.state).toBe("in_progress");
+
+    const snapshot = await queue.queueSnapshot();
+    expect(snapshot.items[0]?.status).toBe("active");
+    expect(snapshot.paused).toBe(false);
   });
 
   it("sin token no lanza nada y lo dice", async () => {

@@ -5,6 +5,9 @@ import { SessionHeader } from "../components/SessionHeader";
 import { Footer } from "../components/Footer";
 import { Nav } from "../components/Nav";
 import { Cargando } from "../components/Puntos";
+import { ToastStack } from "../components/ToastStack";
+import { DonationModal } from "../components/DonationModal";
+import { useDownloadFailureToasts } from "../lib/downloads";
 import { ask } from "../lib/messaging";
 import { useNavigation } from "../store/navigation";
 import type { SessionSnapshot } from "../../lib/messages";
@@ -38,6 +41,11 @@ export default function Home() {
     },
   });
 
+  // Se llama aquí y no en la pantalla de Descargas: una descarga puede
+  // fallar mientras el estudiante está en cualquier otra pestaña de la
+  // extensión, y el aviso tiene que poder aparecer igual.
+  useDownloadFailureToasts();
+
   // El acento de la sección viaja por el DOM: cada pantalla tiene el color de
   // su familia, y los componentes de dentro lo usan sin saber cuál es.
   const shell = (children: React.ReactNode) => (
@@ -46,6 +54,8 @@ export default function Home() {
         {children}
         <Footer />
       </div>
+      <ToastStack />
+      <DonationModal connected={session.data?.state === "connected"} />
     </main>
   );
 

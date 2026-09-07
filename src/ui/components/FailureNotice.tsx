@@ -57,6 +57,14 @@ const PRESENTATIONS: Record<FailureReason, Presentation> = {
   },
 };
 
+/** El título de cada fallo, para quien necesite el mismo texto sin repetir
+ *  la tarjeta entera —el aviso emergente de un fallo dentro de `DrivePanel`,
+ *  por ejemplo—. Una sola fuente para no acabar con dos redacciones del
+ *  mismo fallo que un día se desalineen. */
+export function failureTitle(reason: FailureReason): string {
+  return PRESENTATIONS[reason].title;
+}
+
 export function FailureNotice({ reason, onRetry, retrying }: Props) {
   const p = PRESENTATIONS[reason];
 

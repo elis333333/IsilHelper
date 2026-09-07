@@ -160,20 +160,31 @@ export type QueuedFile = {
  * a propósito, porque son dos respuestas distintas a la misma pregunta —¿lo
  * tengo?— y mezclarlas haría que una tanda entera de omitidos pareciera una
  * descarga que nunca ocurrió.
+ *
+ * `paused` es **de este archivo**, no de la cola entera: es el único que
+ * estaba bajando cuando se pidió la pausa, y pausarlo no le dice nada a los
+ * demás. Antes de que existiera este estado, pausar dejaba al archivo activo
+ * en `"active"` y a la cola entera con una bandera global —`paused` en
+ * `QueueState`—, así que un curso nuevo no podía ni empezar hasta que alguien
+ * reanudara el viejo. Un archivo pausado no bloquea a los que vienen detrás:
+ * `claimNext` solo mira si hay algo `"active"`, y un pausado no lo es.
  */
-export type QueueStatus = "pending" | "active" | "done" | "skipped" | "failed";
+export type QueueStatus = "pending" | "active" | "paused" | "done" | "skipped" | "failed";
 
 export type QueueItem = QueuedFile & {
   status: QueueStatus;
   /** Qué pasó y qué puede hacer el estudiante. `null` mientras no falle. */
   error: string | null;
   attempts: number;
-  /** Bytes ya escritos. Solo tiene valor mientras el archivo está activo. */
+  /** Bytes ya escritos. Solo tiene valor mientras el archivo está activo o
+   *  pausado: es lo último que se supo antes de detenerlo. */
   received: number;
 };
 
 export type QueueSnapshot = {
   items: QueueItem[];
+  /** Hay al menos un archivo en pausa. Ya no es una bandera de la cola
+   *  entera: se calcula mirando si algún `QueueItem` tiene `status: "paused"`. */
   paused: boolean;
   /** Queda trabajo por hacer. La interfaz solo refresca mientras sea cierto. */
   running: boolean;

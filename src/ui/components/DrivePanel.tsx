@@ -1,10 +1,12 @@
+import { useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { ask } from "../lib/messaging";
 import { useQueueAction } from "../lib/downloads";
 import { plural } from "../lib/format";
 import { Notice } from "./Notice";
 import { Cargando } from "./Puntos";
-import { FailureNotice } from "./FailureNotice";
+import { FailureNotice, failureTitle } from "./FailureNotice";
+import { useToasts } from "../store/toasts";
 import type { CourseDetail, DriveExploration } from "../../lib/messages";
 
 /**
@@ -18,6 +20,7 @@ import type { CourseDetail, DriveExploration } from "../../lib/messages";
  */
 export function DrivePanel({ detail }: { detail: CourseDetail }) {
   const action = useQueueAction();
+  const pushToast = useToasts((state) => state.push);
 
   const explore = useMutation({
     mutationFn: () =>
@@ -27,6 +30,23 @@ export function DrivePanel({ detail }: { detail: CourseDetail }) {
         courseName: detail.courseName,
       }),
   });
+
+  // El aviso inline se queda —trae el botón de reintentar y el detalle
+  // completo—, pero un fallo aquí puede pasar desapercibido: la tarjeta
+  // convive con el resto del contenido del curso, que sigue arriba. El toast
+  // es lo que hace que no dependa de que el estudiante mire justo esta
+  // sección para enterarse de que "Ver qué hay en Drive" no funcionó.
+  useEffect(() => {
+    if (explore.data?.state === "drive-failed") {
+      pushToast({
+        tone: "error",
+        title: "No pude leer tus carpetas de Drive",
+        detail: "Comprueba que tienes sesión de Google en este navegador, con tu cuenta institucional.",
+      });
+    } else if (explore.data?.state === "course-failed") {
+      pushToast({ tone: "warning", title: failureTitle(explore.data.reason) });
+    }
+  }, [explore.data, pushToast]);
 
   if (detail.links.length === 0) return null;
 
@@ -41,7 +61,7 @@ export function DrivePanel({ detail }: { detail: CourseDetail }) {
         Google, sin configurar nada.
       </p>
 
-      <div className="acciones">
+      <div className="acciones acciones--drive">
         <button
           type="button"
           className="btn btn--secundario"
