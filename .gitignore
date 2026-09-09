@@ -2,9 +2,12 @@
 .venv/
 client_secret_*.json
 downloads/
+downloads-*/
 *.part
 node_modules/
 dist/
 dist-firefox/
 context/chatgpt*
 files.zip
+*.zip
+web-ext-artifacts/
