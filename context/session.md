@@ -99,7 +99,26 @@ Tipos de módulo nuevos: `folder` y `zoom`. Las clases grabadas **no** son
 
 ## Siguiente paso
 
-**1 · Probar en Brave lo de esta tanda.** Está todo en verde —210 tests,
+**1 · Probar el calendario cargado de verdad.** Está todo en verde —332 tests,
+`typecheck`, `lint` y los dos builds— pero **no se ha visto renderizado en un
+navegador**: la máquina sigue baja de memoria y lo visual solo está verificado
+contra los contrastes medidos con `contraste.py` y el CSS compilado. Qué mirar,
+por orden de lo que más puede estar mal:
+
+- **Que nada se desplace** al abrirse y cerrarse el panel, en ningún anclaje.
+  Los casos que lo tensan: última columna, última fila, esquina inferior
+  derecha, y la **penúltima** fila con varios eventos, que es donde la celda
+  apuntada queda en el medio del bloque de 2×3.
+- Que el panel **no parpadee** al pasar de la celda al panel, y que barrer el
+  ratón por la retícula no dispare una cascada.
+- Noviembre y diciembre, que es donde hay días con varios vencimientos.
+- Teclado: tabular a una celda abre el panel, Escape lo cierra sin perder la
+  celda, Enter abre el modal, y al cerrarlo el foco vuelve a la celda.
+- Que la franja concuerde con la tarjeta de ESTA SEMANA. Es el fallo que ya
+  apareció una vez y el que peor se vería en una tienda.
+- Que la celda diga el curso legible y no `.20262…`.
+
+**2 · Probar en Brave lo de la tanda del 7 de septiembre.** Está en verde —210 tests,
 `typecheck`, `lint` y `build`— y la cabecera y el pie se comprobaron
 renderizados con el CSS ya compilado, pero **la foto de perfil no se ha
 descargado nunca de la plataforma de verdad**. Qué mirar:
@@ -117,7 +136,7 @@ descargado nunca de la plataforma de verdad**. Qué mirar:
   con `zbarimg` —el código reducido lleva exactamente el mismo contenido que el
   original— pero eso comprueba el código, no que la aplicación lo acepte.
 
-**2 · Las tres decisiones que quedan antes de subir nada a una tienda**, y son
+**3 · Las tres decisiones que quedan antes de subir nada a una tienda**, y son
 de Elis, no del código:
 
 - **El nombre de ISIL en el título de la ficha.** `project.md` decidió en su
@@ -130,12 +149,12 @@ de Elis, no del código:
   cierto de hecho pero no de derecho.
 - **Si avisar a sistemas de ISIL antes de publicar**, que ya estaba anotado.
 
-**3 · Las capturas.** Cinco, a 1280 × 800, con lo que tiene que demostrar cada
+**4 · Las capturas.** Cinco, a 1280 × 800, con lo que tiene que demostrar cada
 una en `context/tienda.md`. La primera enseña la descarga, no el tablero. Sin
 datos personales a la vista: para eso conviene encuadrar dejando la cabecera
 fuera.
 
-**4 · Medir lo que queda de Drive** (`fase-3.md` §8c): las rutas de exportación
+**5 · Medir lo que queda de Drive** (`fase-3.md` §8c): las rutas de exportación
 de los nativos y una subcarpeta suelta. Ninguno bloquea, pero los dos son
 supuestos que el código ya da por buenos.
 
@@ -161,6 +180,110 @@ Lo que ese segundo diagnóstico tiene que contestar:
 Después del segundo diagnóstico: endurecer `types.ts` y retomar la Fase 1b por
 las entregas con retroalimentación, si es que para entonces tienen fuente.
 ## Hecho
+
+### Calendario · clasificación, franja de evaluaciones y vista mensual
+
+Cinco pasos pedidos por Elis, con parada para probar entre uno y otro. 332
+tests en total (+113 en esta tanda), `typecheck`, `lint` y los dos builds en
+verde. **Nada de esto tocó `src/api/client.ts`, la autenticación, la cola de
+descargas ni el parsing de Drive.**
+
+**1 · `src/lib/eventKind.ts` — qué es cada evento.** El nombre manda sobre el
+`modulename`, y el porqué está medido en `domain.md` §4: el mismo Proceso de
+Aprendizaje llega como `assign` cuando vence y como `quiz` cuando se cierra.
+Devuelve tipo, urgencia de tipo y, en los PA, número y fase.
+
+Es además **el único sitio donde vive la correspondencia tipo → color**, en
+tokens y nunca en hexadecimal; los componentes lo consumen con
+`--color-tipo` igual que `Nav.tsx` consume `--acento-tab`. Hay un test que
+falla si alguien mete un hex ahí. El foro se lleva el rosa de Escalar y **el
+morado no entra en la tabla**: 3,46:1 sobre la base y 2,77 sobre `#242424`,
+donde falla hasta como elemento de interfaz.
+
+Tres decisiones de contenido: la sigla `EI` suelta **no** se reconoce —dos
+letras que empujan cualquier cosa a la máxima urgencia es un error más caro
+que no reconocerlas—, el número de PA llega a 9 porque los cursos VIR tienen
+seis, y solo se toleran `vencimiento` y `se cierra`, que son las dos formas
+que existen. Lo deducido está en un bloque de tests llamado «tolerancia
+deducida · no medida en 202620», para que nadie lo lea como medición.
+
+**2 · Filtro de 24 h y franja de evaluaciones.** Lo vencido hace más de un
+día sale de la lista, con `dropStaleOverdue` aplicado desde el `select` de
+`Pending.tsx` —fuera del componente, porque TanStack memoriza por identidad
+de la función—. **La caché queda sin filtrar**, que es lo que permite al
+calendario y al buscador ver el ciclo entero.
+
+De ahí salieron dos añadidos que no estaban pedidos y que Elis aprobó
+explícitamente: el estado vacío partido en dos —si el filtro se lo lleva
+todo, decir «la plataforma no devolvió nada» sería mentira— y una línea al
+pie que dice cuántas se escondieron, en la misma voz que el alcance del
+buscador.
+
+`calendar.ts` amplía la ventana al inicio del ciclo (`CYCLE_START_ISO`), con
+los 30 días móviles de antes como suelo. **La ventana se ensancha sola si
+nadie actualiza esa constante**: queda anotado y no parcheado, porque la API
+no dice cuándo empieza un ciclo y el tope de 500 con su `complete: false` es
+la señal.
+
+**La franja no tiene aritmética propia, y eso fue una corrección.** La
+primera versión medía `[ahora, ahora + 7 días]` en milisegundos y contra la
+cuenta real decía «1 proceso de aprendizaje» mientras la tarjeta decía 3:
+un PA que vence a las 23:59 del séptimo día cae fuera de una ventana medida
+desde las 18:00, aunque la lista lo agrupe por día y lo etiquete ESTA
+SEMANA. Ahora los dos bordes son los de la lista —`urgency !== "later"` por
+arriba, `dropStaleOverdue` por abajo—, así que lo que está visible abajo
+está contado arriba.
+
+**3 · La vista mensual**, dentro de **Buscar** y no en una pestaña propia:
+decisión de Elis, y evita inventar una sexta familia de color que no existe.
+El pie con el QR queda debajo sin tocar nada, porque `Home` ya renderiza
+`<Footer />` después del contenido.
+
+`src/lib/month.ts` es aritmética pura de semanas de lunes a domingo, con las
+claves de día **en local**: con `toISOString`, en UTC-5 toda entrega
+posterior a las 19:00 caería en la celda del día siguiente.
+
+**Retícula CSS y no `<table>`**, y es de comportamiento: una fila de tabla
+crece para caber su contenido aunque la celda lleve `overflow: hidden`, así
+que un día con cuatro entregas empujaría el mes. `minmax(0, 1fr)` reparte en
+partes iguales y recorta. Las filas siguen siendo elementos con `role="row"`
+gracias a `subgrid`, que hereda las columnas de fuera y permite que el panel
+—hijo de la retícula, no de una fila— se coloque sobre las celdas que le
+tocan.
+
+**4 · El overlay de hover.** Un solo elemento reposicionado, 2×2 con un
+evento y 2×3 con varios. Toda la colocación vive en `panelPlacement()`, que
+es pura y tiene un test de invariante por fuerza bruta —tres largos de mes ×
+todas las semanas × siete columnas × los dos altos— comprobando que el
+bloque nunca pasa de la última línea. Es la propiedad de la que depende que
+nada se desplace.
+
+**5 · El modal.** `Modal.tsx` extraído de `DonationModal`, que **no se
+migró**: funciona y tocarlo caía fuera de lo pedido.
+
+**Tres cosas que costaron encontrar y no se ven en el resultado:**
+
+- **La retícula empujaba porque las filas se autocolocaban.** Tenían
+  `grid-column: 1 / -1` y ninguna `grid-row`. El algoritmo coloca primero lo
+  que tiene posición definida —el panel— y luego busca hueco para lo demás
+  **evitando lo ocupado**, así que empujaba la fila y creaba una implícita.
+  Dos ítems explícitos sí pueden solaparse; uno autocolocado nunca. Ahora
+  cada fila lleva su pista escrita.
+- **Con 2×3 la celda apuntada puede quedar en el medio del bloque**, no solo
+  arriba o abajo: son seis posiciones, no cuatro esquinas. Por eso el
+  recorte se calcula y el crecimiento pasó de `@keyframes` a **transición**,
+  que además se interrumpe bien si el cursor vuelve a mitad del cierre.
+- **El cierre del panel cuelga de la retícula, no de la celda.** El panel se
+  dibuja encima de la celda que lo abrió, así que al entrar en él la celda
+  recibe su `mouseleave`: cerrar ahí lo haría parpadear.
+
+**Aparte, dos ajustes de texto.** La línea de la celda pasó a tipo + curso
+abreviado, y ahí salió que **el código de curso lleva punto**
+(`3672.202620`): la expresión que solo quitaba dígitos seguidos cortaba en él
+y dejaba `.202620` al frente. Y los textos de aporte se movieron a
+`src/ui/copy/donacion.ts` y rotan, con la regla de voz escrita como test
+—nada de «apóyame», ningún signo de exclamación, y todas dicen en el cuerpo
+que no pasa nada si no se aporta—.
 
 ### Interfaz · navbar, avisos visibles y apoyo económico como ventana
 
@@ -557,11 +680,40 @@ detalle completo está en `domain.md` §2.
 | Reanudar relanza desde cero, no continúa donde se quedó | Seguir de verdad exigiría que Moodle o Drive acepten una petición por rango bien después de la pausa, sin comprobar. `retryQueue` ya restaba desde cero ante un fallo del servidor; reanudar sigue el mismo criterio ya probado en vez de uno nuevo sin probar |
 | Reanudar cancela y borra del historial la descarga vieja antes de relanzar | Si se abandona sin cancelar, esa entrada nunca pasa por el cierre normal de `settle` —el que borra la anotación del historial— y se queda ahí con el token pegado a la URL, a la vista en `chrome://downloads`. Es la regla 4 en un sitio nuevo |
 | «Pausar» y «Seguir descargando» dejan de ser el mismo botón según una bandera | Con la pausa por archivo pueden coexistir un archivo bajando —al que pausar tiene sentido— y otro en pausa de antes —al que reanudar tiene sentido—. Un solo botón que se turnaba por una bandera global ocultaría uno de los dos casos |
+| **El nombre del evento manda sobre el `modulename`** | El mismo Proceso de Aprendizaje llega como `assign` cuando vence y como `quiz` cuando se cierra (`domain.md` §4). El `modulename` es un hecho de la plataforma pero no distingue una evaluación de una tarea; el nombre sí |
+| La sigla `EI` suelta no se reconoce, la `PA` sí | Dos letras que empujan cualquier cosa a la **máxima** urgencia es un error más caro que no reconocerlas. El peor caso de `PA` es subir una tarea a proceso de aprendizaje, y además es el vocabulario con el que el instituto la nombra |
+| El calendario va dentro de Buscar, no en una sexta pestaña | Decisión de Elis, 14 de septiembre de 2026. Las cinco familias de color ya están repartidas una por sección, y una sexta pestaña obligaría a inventar un color que el sistema no tiene |
+| La franja de evaluaciones usa los bordes de la lista, no una ventana propia | Tenía aritmética propia en milisegundos y decía «1» donde la tarjeta decía «3»: un PA que vence a las 23:59 del séptimo día cae fuera de una ventana medida desde las 18:00. Dos criterios para la misma palabra en la misma pantalla |
+| El filtro de 24 h va en el `select` de Pendientes, no en el worker | La caché `["pending"]` la comparten el calendario y el buscador, y un calendario que esconde lo del martes pasado está roto por definición. El `select` no muta la caché |
+| Retícula CSS y no `<table>` para el calendario | Una fila de tabla crece para caber su contenido aunque la celda lleve `overflow: hidden`, así que un día con cuatro entregas empujaría el mes. `minmax(0, 1fr)` reparte en partes iguales y recorta |
+| Las filas del calendario llevan `grid-row` escrita a mano | Sin ella se autocolocan, y el algoritmo busca hueco **evitando lo ocupado**: la fila que el panel pisaba se iba una pista abajo y creaba una fila implícita. Dos ítems explícitos sí pueden solaparse; uno autocolocado nunca |
+| El panel crece por transición y no por `@keyframes` | Con el bloque de 2×3 la celda apuntada puede quedar en el medio: son seis posiciones, no cuatro esquinas, y enumerarlas en CSS sería repetir seis veces la misma cuenta. Además una transición se interrumpe bien si el cursor vuelve a mitad del cierre |
+| El cierre del panel cuelga de la retícula, no de la celda | El panel se dibuja encima de la celda que lo abrió, así que al entrar en él la celda recibe su `mouseleave`. Cerrar ahí lo haría parpadear |
+| El modal no dice el estado de la entrega | `mod_assign_get_submission_status` no está en `main`. Enseñar un hueco con etiqueta sería prometer un dato que no se tiene, que es lo que ya tumbó la pantalla de perfil |
+| Los textos de aporte rotan y se eligen al cargar el módulo | Una vez por apertura de pestaña es más estable que una por montaje: si el pie o la ventana se remontan, el texto cambiaría a media interacción. Y al no ser estado, no hay dos renders que puedan desincronizarse |
+| La regla de voz del aporte está escrita como test | Es del tipo que se respeta al escribirla y se rompe seis meses después, al añadir una variante con prisa |
 
 ---
 
 ## Pendiente de resolver
 
+- [ ] **Ver el calendario cargado en Brave.** 332 tests en verde y cero
+      comprobación visual: ni el overlay, ni el modal, ni las barras de
+      desplazamiento se han visto en pantalla. El detalle de qué mirar está en
+      **Siguiente paso · 1**
+- [ ] **Reescribir la variante «Un café, si acaso»** del modal de donación.
+      Dice «Yape está abajo» y en el modal el QR está **a la izquierda** del
+      texto, o arriba si el ancho es angosto; nunca debajo. Cableada tal cual
+      para no bloquear, pero es una frase que no describe la pantalla
+- [ ] **Decidir si «premium» se queda** en la variante «Gratis, y sigue gratis»
+      del pie. Es la única palabra en inglés de los nueve textos y choca con la
+      regla de traducir la jerga
+- [ ] **Decidir si excluir la combinación repetida**: el modal #1 y el pie #1
+      comparten el cuerpo palabra por palabra, y son sorteos independientes, así
+      que una de cada veinte veces la misma frase sale dos veces en pantalla
+- [ ] **Confirmar qué trae `course.shortname`** en esta plataforma. El código
+      lo prefiere como abreviatura cuando parece un nombre; si resulta ser el
+      código de matrícula otra vez, la rama nunca se usa y se puede quitar
 - [ ] **Volver a probar la exploración de Drive en los dos cursos afectados**
       (`1582 DIRECCION DE PERSONAS`, `2016 GESTION DE PROYECTOS`) con el fix
       de `exploreCourseDrive` ya en `dist/`. Debería encontrar los 16
@@ -1329,3 +1481,74 @@ Archivos tocados: `src/lib/messages.ts`, `src/lib/storage.ts`,
 `src/ui/components/QueueRow.tsx`, `src/ui/lib/downloads.ts` (nuevos conteos
 `active`/`paused` en `tally`). Nada en `src/api/` ni en la lógica de Drive o
 de Moodle.
+
+**2026-09-15 · 09:30** — **El calendario**, pedido por Elis en cinco pasos con
+parada para probar entre uno y otro, más dos rondas de corrección suyas sobre
+lo que vio renderizado. El dashboard llevaba congelado desde el 6 de
+septiembre y esto lo descongela por una sola pieza: la lista contesta «qué me
+toca ahora» y no contesta «cómo viene el mes», que es la pregunta con la que
+un estudiante decide qué archivar antes de que le cierren el ciclo. El detalle
+completo está en **Hecho · Calendario**; aquí va lo que costó y no se ve.
+
+**Los nombres reales del ciclo cambian el diseño del clasificador.** Elis pasó
+las once formas del ciclo 202620 completo, y con ellas cayó el ejemplo con el
+que se había justificado la regla: la Evaluación Integral siempre llega como
+`assign`, no como `quiz`. Lo que sostiene «el nombre manda sobre el
+`modulename`» es otra cosa, y es más fuerte: **el mismo Proceso de Aprendizaje
+llega como `assign` cuando vence y como `quiz` cuando se cierra**. También
+salió que el rango de PA a 1–5 estaba mal —los dos cursos VIR tienen seis— y
+que lo que protege de leer «Proceso de aprendizaje 2026» como PA 2026 no es el
+rango sino el lookahead. Todo medido, en `domain.md` §4.
+
+De ahí una decisión de método que conviene no perder: **lo deducido se separa
+de lo medido en los propios tests.** Las variantes que el código tolera de más
+viven en un bloque llamado «tolerancia deducida · no medida en 202620», y la
+sigla `EI` suelta se quitó del todo —dos letras que empujan cualquier cosa a la
+máxima urgencia es un error más caro que no reconocerlas—.
+
+**Dos fallos de lógica que encontró Elis probando, y los dos eran el mismo
+error de fondo: dos criterios para la misma palabra.** La franja decía «1
+proceso de aprendizaje» mientras la tarjeta decía 3, porque tenía su propia
+ventana en milisegundos y un PA que vence a las 23:59 del séptimo día cae fuera
+de una ventana medida desde las 18:00; la lista lo agrupaba por día y lo
+etiquetaba ESTA SEMANA. Se quitó la aritmética propia: los dos bordes son ahora
+los de la lista. Y la celda decía `PA 1 · .20262…` porque **el código de curso
+lleva punto** (`3672.202620`) y la expresión que lo quitaba solo aceptaba
+dígitos seguidos, así que cortaba ahí.
+
+**El overlay empujaba la retícula, y la causa no era ninguna de las tres que
+Elis sospechaba** —todas comprobadas y todas ya correctas: el anclaje topaba en
+la última línea, el panel era hijo directo, las filas eran `minmax(0, 1fr)`—.
+Era una cuarta: **las filas se autocolocaban.** Tenían `grid-column: 1 / -1` y
+ninguna `grid-row`, y el algoritmo coloca primero lo que tiene posición
+definida —el panel— y luego busca hueco para lo demás **evitando lo ocupado**,
+así que empujaba la fila que el panel pisaba y creaba una implícita. Dos ítems
+con posición explícita sí pueden solaparse; uno autocolocado nunca.
+
+**Y el 2×3 destapó un caso que con 2×2 no existía:** anclado hacia arriba con
+tres filas de alto, la celda apuntada puede quedar **en el medio** del bloque.
+Son seis posiciones, no cuatro esquinas, así que las cuatro animaciones fijas
+se cambiaron por un recorte calculado y una **transición** en vez de
+`@keyframes` —que además se interrumpe bien si el cursor vuelve a mitad del
+cierre, cosa que una animación con nombre no hace—. La aritmética salió del
+componente a `panelPlacement()`, con un test de invariante por fuerza bruta
+sobre todos los meses, semanas, columnas y altos: el bloque nunca pasa de la
+última línea, que es la propiedad de la que depende que nada se mueva.
+
+**Dos desviaciones del sistema, anotadas para que no parezcan descuidos:** los
+200 ms y `cubic-bezier(.16,1,.3,1)` del panel no son tokens —el sistema tiene
+150/250/400 y una sola curva— y los pidió Elis explícitamente; y el pulgar de
+las barras de desplazamiento usa `--color-disabled` por su **valor** y no por
+su nombre, porque es el gris que llega a 3:1 sobre las superficies oscuras
+mientras que el borde sutil se queda en 1,9 y no se vería.
+
+Aparte, los textos de aporte salieron a `src/ui/copy/donacion.ts` y rotan, con
+la regla de voz escrita como test. Tres variantes quedaron señaladas y sin
+reescribir, en **Pendiente de resolver**; la que más importa es la que dice
+«Yape está abajo» cuando en el modal el QR está a la izquierda.
+
+332 tests, `typecheck`, `lint` y los dos builds en verde. **Nada de esto tocó
+`src/api/client.ts`, la autenticación, la cola de descargas ni el parsing de
+Drive.** Y nada se ha visto renderizado en un navegador: la máquina sigue baja
+de memoria, así que lo visual está verificado solo contra `contraste.py` y el
+CSS compilado. Esa es la primera tarea de la próxima tanda.

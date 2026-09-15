@@ -1,7 +1,7 @@
 {
   "name": "isilhelper",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "description": "Extensión que le devuelve a los estudiantes de ISIL el control sobre su información académica",
   "license": "MIT",

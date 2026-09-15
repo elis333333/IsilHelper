@@ -328,8 +328,11 @@ tests, para que nadie las lea como una medición.
 
 ```
 3672.202620 GESTION DE PROYECTOS (SPR)
-└──┬─┘ └─┬──┘ └───────┬────────┘ └─┬─┘
- código periodo     nombre      modalidad
+─┬── ──┬─── ────────┬─────────── ──┬──
+ │     │            │              └ modalidad, se repite por bloques
+ │     │            └ lo único que identifica al curso
+ │     └ periodo académico
+ └ código de matrícula
 ```
 
 **Ni el código ni la modalidad distinguen un curso de otro**: el código tiene la
