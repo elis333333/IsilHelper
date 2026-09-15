@@ -8,7 +8,10 @@ export type View =
   | { name: "pending" }
   | { name: "courses" }
   | { name: "grades" }
-  | { name: "search" }
+  /** El calendario vive dentro de Buscar. `focus` lo trae la franja de
+   *  evaluaciones para llevar la vista hasta la retícula en vez de dejar al
+   *  estudiante arriba, delante del campo de búsqueda. */
+  | { name: "search"; focus?: "calendar" }
   | { name: "downloads" }
   | { name: "course"; courseId: number; courseName: string };
 

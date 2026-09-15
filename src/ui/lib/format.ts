@@ -24,6 +24,38 @@ export function dueLabel(dueSeconds: number, now: Date = new Date()): string {
   return longDate.format(due);
 }
 
+/**
+ * Solo el tiempo que falta, sin la fecha: "hoy", "mañana", "en 6 días".
+ *
+ * `dueLabel` pega además la hora y la fecha larga, que en una lista está bien
+ * porque es la única línea que habla de tiempo. En el panel del calendario la
+ * fecha ya la dice la celda en la que está, así que repetirla es ruido.
+ */
+export function remainingLabel(dueSeconds: number, now: Date = new Date()): string {
+  const diff = daysBetween(now, new Date(dueSeconds * 1000));
+
+  if (diff === 0) return "hoy";
+  if (diff === 1) return "mañana";
+  if (diff === -1) return "ayer";
+  if (diff < -1) return `hace ${Math.abs(diff)} días`;
+  return `en ${diff} días`;
+}
+
+const exactFormat = new Intl.DateTimeFormat("es-PE", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
+
+/** La fecha completa con hora, para el modal: ahí no se resume nada. */
+export function exactDue(dueSeconds: number): string {
+  const label = exactFormat.format(new Date(dueSeconds * 1000));
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
 /** Porcentaje sin decimales. Devuelve null si no hay dato, para que quien
  *  llame decida qué decir en vez de mostrar un cero que no es cierto. */
 export function percentage(value: number | null): string | null {

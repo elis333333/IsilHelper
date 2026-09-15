@@ -24,6 +24,7 @@ const pending: Loaded<PendingList> = {
         urgency: "week",
         courseId: 1,
         courseName: "Curso 1",
+        courseShort: null,
         kind: "assign",
         url: null,
       },

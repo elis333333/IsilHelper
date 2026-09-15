@@ -26,11 +26,22 @@ de correrla contra la cuenta real.
 
 ## Fase actual
 
+> **El dashboard se descongela por una pieza, 14 de septiembre de 2026.** La
+> congelación del 6 de septiembre sigue en pie para todo lo demás: lo que se
+> abrió es el **calendario**, y no es crecimiento del tablero por gusto. Los
+> pendientes en lista contestan «qué me toca ahora» y no contestan «cómo viene
+> el mes», que es la pregunta con la que un estudiante decide qué archivar
+> antes de que le cierren el ciclo. La descarga sigue siendo el producto.
+
 **Fase 4 — Distribución, empezada el 7 de septiembre de 2026.** El producto
 está hecho y verificado contra la cuenta real; lo que queda es lo que hace
-falta para publicarlo. En esta tanda entraron los cuatro frentes que Elis pidió
-cerrar antes de la tienda: interfaz, apoyo económico, ficha de tienda y legal.
-Lo que sigue abajo, en **Siguiente paso**, es lo que todavía no está.
+falta para publicarlo. Entraron los cuatro frentes que Elis pidió cerrar antes
+de la tienda: interfaz, apoyo económico, ficha de tienda y legal.
+
+**Encima de eso, el calendario**, hecho entre el 14 y el 15 de septiembre de
+2026 en cinco pasos con parada para probar entre uno y otro. Está descrito en
+**Hecho · Calendario**. Lo que sigue abajo, en **Siguiente paso**, es lo que
+todavía no está.
 
 **La Fase 2 está escrita y en verde**, y lo siguiente es una sola cosa:
 **correrla contra la cuenta real**. 126 tests, `typecheck`, `lint` y `build`

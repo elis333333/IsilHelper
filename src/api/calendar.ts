@@ -17,9 +17,42 @@ import { ok, type Result } from "./result";
 import type { ApiError } from "./errors";
 import type { ActionEventsResponse, CalendarEvent } from "./types";
 import { collectPages } from "./paginate";
+import { CYCLE_START_ISO } from "../lib/constants";
 
 const FUNCTION = "core_calendar_get_action_events_by_timesort";
+
+/**
+ * La ventana móvil que había antes. Sigue existiendo para cubrir el tramo en
+ * que el inicio de ciclo aún no ha llegado o acaba de llegar: en los primeros
+ * días de septiembre, 30 días atrás alcanzan más lejos que el propio inicio.
+ */
 const LOOKBACK_DAYS = 30;
+
+/**
+ * Desde cuándo se piden los eventos: **el inicio del ciclo**, o 30 días atrás
+ * si eso fuera anterior.
+ *
+ * Antes eran 30 días fijos, que le bastaban a la lista de pendientes pero no
+ * al calendario: un mes que cayera fuera de esa ventana salía vacío, y un
+ * calendario vacío no se distingue de un calendario roto. La ampliación no le
+ * cuesta nada a Pendientes, porque esa pantalla ya esconde lo vencido hace más
+ * de un día.
+ *
+ * Cabe de sobra en el tope de 500 eventos: un ciclo de 11 cursos ronda el
+ * centenar. Si alguna vez no cupiera, `complete` se pondría en `false` y la
+ * pantalla ya lo dice.
+ *
+ * **La ventana crece si nadie actualiza `CYCLE_START_ISO`.** Empezado el ciclo
+ * siguiente sin tocar la constante, esto seguiría pidiendo desde septiembre de
+ * 2026, cada vez más atrás. No se corrige con código porque no hay forma de
+ * saber desde aquí cuándo empieza un ciclo —la API no lo dice—, y el tope de
+ * 500 eventos con su `complete: false` es lo que avisa si algún día estorba.
+ */
+export function lookbackFrom(now: Date): number {
+  const cycleStart = Math.floor(Date.parse(CYCLE_START_ISO) / 1000);
+  const rolling = Math.floor(now.getTime() / 1000) - LOOKBACK_DAYS * 86_400;
+  return Math.min(cycleStart, rolling);
+}
 
 /** Moodle rechaza `limitnum` por encima de 50. */
 export const PAGE_SIZE = 50;
@@ -36,7 +69,7 @@ export type PendingEvents = {
 export async function getActionEventsPaged(
   now: Date = new Date(),
 ): Promise<Result<PendingEvents, ApiError>> {
-  const timesortfrom = Math.floor(now.getTime() / 1000) - LOOKBACK_DAYS * 86_400;
+  const timesortfrom = lookbackFrom(now);
 
   const collected = await collectPages<CalendarEvent>(
     async (after) => {

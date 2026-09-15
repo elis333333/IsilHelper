@@ -197,6 +197,75 @@
 }
 .nav__item { display: inline-flex; align-items: center; }
 
+/* ---------- Franja de evaluaciones ----------
+   Va encima de los contadores porque es lo único de la pantalla que separa lo
+   que califica el ciclo del resto. Misma anatomía que `.pendiente` —barra de
+   zona a la izquierda, marca, cuerpo, dato a la derecha— para que se lea como
+   parte de la misma lista y no como un componente traído de fuera.
+
+   El color lo pone `--color-tipo`, que llega desde `eventKind.ts`: rojo si hay
+   alguna integral, ámbar si solo hay procesos de aprendizaje.
+
+   **No cambia de fondo al pasar el cursor**, y es la misma razón por la que no
+   lo hacen las filas de pendientes: sobre #242424 el rojo cae a 4,38:1 y la
+   marca, que es texto de 12 px, dejaría de cumplir AA. El cursor se señala
+   moviendo el borde al color del tipo, que es elemento de interfaz y le basta
+   con 3:1. */
+.franja {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  margin-bottom: var(--space-4);
+  padding: var(--space-4);
+  text-align: left;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left-width: var(--border-width-zone);
+  border-left-color: var(--color-tipo);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  cursor: pointer;
+  transition: border-color var(--motion-fast) var(--motion-ease);
+}
+.franja:hover { border-color: var(--color-tipo); }
+
+.franja__marca {
+  flex: 0 0 auto;
+  color: var(--color-tipo);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  line-height: 1;
+}
+
+.franja__cuerpo { flex: 1 1 320px; min-width: 0; }
+
+.franja__titulo {
+  display: block;
+  color: var(--color-heading);
+  font-weight: var(--weight-semibold);
+}
+
+.franja__detalle {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+}
+
+/* Neutro a propósito: el verde de acción aquí competiría con el acento del
+   tipo, y el sistema pide un solo color de acento por composición. */
+.franja__ir {
+  flex: 0 0 auto;
+  color: var(--color-text-subtle);
+  font-size: var(--text-body-sm);
+  white-space: nowrap;
+}
+.franja:hover .franja__ir,
+.franja:focus-visible .franja__ir { color: var(--color-text); text-decoration: underline; }
+
 /* ---------- Resumen de urgencias ---------- */
 .resumen { display: flex; flex-wrap: wrap; gap: var(--space-4); margin-bottom: var(--space-8); }
 
@@ -345,6 +414,331 @@
 .modulo__estado { font-family: var(--font-mono); font-size: var(--text-body-sm); white-space: nowrap; }
 .modulo__nombre { flex: 1 1 auto; min-width: 0; }
 .modulo__meta { color: var(--color-text-subtle); font-size: var(--text-body-sm); white-space: nowrap; }
+
+/* ---------- Calendario mensual ----------
+   Vive dentro de Buscar, así que toma el azul de Evolucionar de la sección sin
+   pedir un sexto color de familia. Todo el color de tipo llega por
+   `--color-tipo`, que pone `eventKind.ts`.
+
+   La altura se reserva en un solo número —`--calendario-reserva`, lo que ocupan
+   cabecera, navegación, campo de búsqueda y línea de alcance— para que ajustarla
+   sea tocar una línea y no una fórmula repartida. El mínimo no es decorativo:
+   con seis filas y tres eventos por celda, por debajo de 560 px las celdas
+   empiezan a recortar contenido. */
+.calendario {
+  --calendario-reserva: 400px;
+  margin-top: var(--space-12);
+}
+
+.calendario__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+.calendario__cabecera .subtitulo { margin-bottom: 0; }
+
+.calendario__controles { display: flex; gap: var(--space-2); }
+
+/* Cuadrado, porque dentro solo va una flecha. Sin esto hereda el
+   `padding-inline` de 24 px de `.btn` y sale un botón tres veces más ancho
+   que alto. */
+.btn--icono {
+  width: var(--control-alto);
+  padding-inline: 0;
+  font-size: var(--text-h4);
+  line-height: 1;
+}
+
+/* `minmax(0, 1fr)` en las filas es lo que impide que una semana cargada se
+   lleve más alto que las demás: reparte en partes iguales y lo que no cabe se
+   recorta en la celda. Con filas de tabla no se puede, porque crecen para
+   caber su contenido aunque la celda lleve `overflow: hidden`. */
+.calendario__grilla {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: auto repeat(var(--semanas), minmax(0, 1fr));
+  height: clamp(560px, calc(100vh - var(--calendario-reserva)), 860px);
+}
+
+/* `subgrid` es lo que permite tener las dos cosas a la vez: filas que son
+   elementos de verdad —y por tanto `role="row"`— y columnas definidas en la
+   retícula de fuera, que es donde el panel necesita poder colocarse. */
+.calendario__fila {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  min-height: 0;
+}
+
+.calendario__columna {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-mono-label);
+  color: var(--color-text-subtle);
+  padding: 0 var(--space-2) var(--space-2);
+}
+
+/* ---------- Celda de día ---------- */
+.dia {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border-strong);
+  /* Una celda no crece: el mes tiene que caber entero sin que una fila con
+     mucho empuje a las demás fuera de la pantalla. Es además lo que el panel
+     del paso siguiente necesita para poder dibujarse encima sin mover nada. */
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Fuera del mes: visible pero atenuado. Se atenúa bajando la superficie y el
+   número, no con `opacity`, que se llevaría por delante el contraste de los
+   eventos que ese día sí tenga. */
+.dia--fuera { background: var(--color-base); }
+.dia--fuera .dia__numero { color: var(--color-text-subtle); }
+
+/* El interior es el mismo tenga o no eventos; lo único que cambia es si el
+   elemento es un botón. Así las dos clases de celda se ven idénticas y el
+   relleno no toca nunca al número, que lleva fondo propio cuando es hoy. */
+.dia__interior {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  padding: var(--space-2);
+  overflow: hidden;
+}
+
+.dia__accion {
+  background: none;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+/* Solo el borde cambia, nunca el fondo: sobre una superficie más clara los
+   colores de tipo de los eventos caerían por debajo de AA. */
+.dia--con-eventos:hover,
+.dia--con-eventos:focus-within { border-color: var(--acento-seccion); }
+
+.dia__numero {
+  display: inline-block;
+  min-width: var(--space-6);
+  margin-bottom: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: var(--text-body-lg);
+  line-height: 1.2;
+  color: var(--color-heading);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* Hoy lleva borde **y** el número en una caja rellena: dos cambios, uno de
+   color y otro de forma, porque el color solo no informa a quien no lo
+   distingue. El texto encima del azul va oscuro, 5,58:1. */
+.dia--hoy { border-color: var(--acento-seccion); }
+.dia--hoy .dia__numero {
+  background: var(--acento-seccion);
+  color: var(--color-base);
+  font-weight: var(--weight-semibold);
+}
+
+.dia__eventos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Mismo lenguaje que las filas de pendientes: barra de zona a la izquierda con
+   el color del tipo, sobre superficie de tarjeta. Sobre #1A1A1A los seis
+   colores de tipo pasan AA. */
+.dia__evento {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  margin-bottom: var(--space-1);
+  padding: 0 var(--space-1);
+  background: var(--color-surface);
+  border-left: var(--border-width-zone) solid var(--color-tipo);
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
+}
+
+.dia__tipo {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  color: var(--color-tipo);
+}
+
+/* El curso y no el nombre del evento: a esta anchura, "Vencimiento de Pro…"
+   sale idéntico en catorce celdas y no distingue ninguna. El nombre completo
+   lo da el panel, que tiene sitio para enseñarlo entero. */
+.dia__curso {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dia__curso::before {
+  content: "·";
+  margin-right: var(--space-1);
+  color: var(--color-disabled);
+}
+
+.dia__mas {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--color-text-subtle);
+  padding-left: var(--space-1);
+}
+
+/* ---------- Panel del día ----------
+   Un solo elemento para toda la retícula, colocado con `grid-column` y
+   `grid-row` sobre el bloque de 2×2 que le toca. Se dibuja **encima**: no
+   ocupa sitio propio, así que ninguna celda se mueve ni cambia de tamaño.
+
+   Va sobre `--color-surface` (#1A1A1A) y no sobre la superficie elevada: sobre
+   #242424 el rojo cae a 4,38:1 y el texto de tipo dejaría de cumplir AA. */
+.panel-dia {
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--acento-seccion);
+  overflow: auto;
+  /* 200 ms y esta curva no salen de los tokens de movimiento —el sistema tiene
+     150/250/400 y una sola curva—: los pidió Elis explícitamente para que el
+     panel crezca con una salida muy amortiguada. Queda anotado para que no
+     parezca un valor improvisado. */
+  transition: clip-path 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/*
+  Crece desde la celda apuntada hasta llenar el bloque, y no es un fundido: un
+  `opacity` de 0 a 1 no dice de dónde sale el panel. `clip-path` además no
+  deforma el contenido, que es lo que pasaría escalando con `transform`.
+
+  Arranca desde la porción exacta que ocupa la celda que lo abrió. Con
+  `prefers-reduced-motion` la regla global de `tokens.css` deja la transición
+  en 0,01 ms, así que aparece y desaparece entero, sin recorrido.
+
+  El recorte de partida lo calcula `DayPanel` y entra por `style`, porque con
+  el bloque de 2×3 la celda apuntada puede quedar arriba, en el medio o abajo,
+  y en dos columnas: son seis posiciones, no cuatro esquinas. Enumerarlas en
+  CSS sería repetir seis veces la misma cuenta.
+
+  Al cerrar se recorre el mismo camino del revés sin nada más que hacer: es la
+  misma transición hacia el mismo valor de partida. Y una transición se
+  interrumpe bien —si el cursor vuelve a mitad del cierre, sale desde donde
+  está— cosa que una animación con nombre no hace.
+*/
+
+/* Durante el cierre el panel sigue tapando sus celdas, y sin esto se comería
+   el `mouseenter` de la que el cursor acaba de destapar. */
+.panel-dia--cerrando { pointer-events: none; }
+
+.panel-dia__fecha {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-mono-label);
+  color: var(--color-text-subtle);
+}
+
+.panel-dia__lista { list-style: none; margin: 0; padding: 0; min-height: 0; }
+.panel-dia__lista li + li { margin-top: var(--space-2); }
+
+.panel-dia__evento {
+  display: block;
+  width: 100%;
+  padding: var(--space-2);
+  background: none;
+  border: 0;
+  border-left: var(--border-width-zone) solid var(--color-tipo);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.panel-dia__evento:hover { background: var(--color-surface-1); }
+
+.panel-dia__tipo {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  color: var(--color-tipo);
+}
+
+.panel-dia__nombre {
+  display: block;
+  color: var(--color-heading);
+  font-size: var(--text-body-sm);
+  font-weight: var(--weight-medium);
+}
+
+.panel-dia__meta {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: var(--text-caption);
+}
+
+/* ---------- Detalle del día, dentro del modal ---------- */
+.detalle { list-style: none; margin: var(--space-6) 0 0; padding: 0; }
+.detalle__evento {
+  padding-left: var(--space-4);
+  border-left: var(--border-width-zone) solid var(--color-tipo);
+}
+.detalle__evento + .detalle__evento { margin-top: var(--space-6); }
+
+.detalle__tipo {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-mono-label);
+  color: var(--color-tipo);
+}
+
+.detalle__nombre {
+  margin: var(--space-1) 0 var(--space-2);
+  color: var(--color-heading);
+  font-weight: var(--weight-semibold);
+}
+
+.detalle__meta {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+}
+
+/* Visible para un lector de pantalla y para nadie más. `display: none` lo
+   escondería también de él, que es lo contrario de lo que hace falta. */
+.u-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
 
 /* ---------- Resultados del buscador ----------
    El nombre manda: es lo que se escribió para encontrarlo. El curso y la

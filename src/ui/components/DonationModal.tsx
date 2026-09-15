@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useDonationPrompt } from "../store/donation";
 import { useDonationTriggers } from "../lib/donation";
+import { modalCopy } from "../copy/donacion";
 import { REPO_URL } from "../../lib/constants";
 
 /**
@@ -11,8 +12,9 @@ import { REPO_URL } from "../../lib/constants";
  * algo— y no como una franja que hay que desplazarse hasta encontrar. No se
  * repite en esta sesión: `useDonationPrompt` ya lo garantiza.
  *
- * El texto es la variante «Ya que estás por aquí», elegida por Elis el 7 de
- * septiembre de 2026 entre tres con el mismo tono directo del pie.
+ * El texto sale de `copy/donacion.ts` y rota: una variante por apertura de la
+ * pestaña, no una por render. El botón «Ahora no» y el enlace al repositorio
+ * no rotan, porque no son la petición.
  */
 export function DonationModal({ connected }: { connected: boolean }) {
   useDonationTriggers(connected);
@@ -67,12 +69,9 @@ export function DonationModal({ connected }: { connected: boolean }) {
 
           <div className="donacion__cuerpo">
             <h2 id="donacion-titulo" className="subtitulo">
-              Ya que estás por aquí
+              {modalCopy.titulo}
             </h2>
-            <p className="parrafo parrafo--apagado">
-              Esto no te pidió nada para funcionar, pero mantenerlo sí cuesta tiempo. Si quieres
-              devolver algo, aquí está el Yape. Si no, ningún problema: sigue bajando tus cursos.
-            </p>
+            <p className="parrafo parrafo--apagado">{modalCopy.cuerpo}</p>
             <p className="parrafo" style={{ marginBottom: 0 }}>
               <a href={REPO_URL} target="_blank" rel="noreferrer">
                 El código está abierto en GitHub

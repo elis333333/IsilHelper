@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Notice } from "../components/Notice";
+import { MonthCalendar } from "../components/MonthCalendar";
 import { useNavigation } from "../store/navigation";
 import { ask } from "../lib/messaging";
 import { buildIndex, readCachedContents, scopeLine } from "../lib/cache-index";
@@ -27,7 +28,21 @@ const KIND_LABEL: Record<SearchKind, string> = {
 export default function Search() {
   const client = useQueryClient();
   const go = useNavigation((state) => state.go);
+  const view = useNavigation((state) => state.view);
   const [query, setQuery] = useState("");
+  const calendarRef = useRef<HTMLDivElement>(null);
+
+  // Quien llega desde la franja de evaluaciones viene a ver el calendario, no
+  // a buscar: aterrizar arriba del todo le obligaría a desplazarse a mano.
+  const toCalendar = view.name === "search" && view.focus === "calendar";
+  useEffect(() => {
+    if (!toCalendar) return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    calendarRef.current?.scrollIntoView({
+      behavior: reduced ? "auto" : "smooth",
+      block: "start",
+    });
+  }, [toCalendar]);
 
   // Las mismas claves que Cursos y Pendientes: si esas pantallas ya cargaron,
   // esto no cuesta ninguna petición. Si no, son dos, no once.
@@ -61,7 +76,10 @@ export default function Search() {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           autoComplete="off"
-          autoFocus
+          // Quien viene a ver el calendario no quiere el foco en el campo: el
+          // navegador desplazaría hasta él y pelearía con el desplazamiento de
+          // arriba.
+          autoFocus={!toCalendar}
         />
       </div>
 
@@ -140,6 +158,14 @@ export default function Search() {
           })}
         </ul>
       )}
+
+      {/* El calendario cierra la pantalla: el buscador se queda arriba y el pie
+          con el QR queda debajo de la retícula, que es donde tiene que estar.
+          Lee los mismos pendientes sin filtrar, así que no cuesta ninguna
+          petición nueva. */}
+      <div ref={calendarRef}>
+        <MonthCalendar items={pending.data?.state === "ok" ? pending.data.value.items : []} />
+      </div>
     </>
   );
 }

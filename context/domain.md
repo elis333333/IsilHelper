@@ -288,6 +288,66 @@ el modo diagnóstico.
 
 Comprobar siempre la presencia de `exception` antes de usar la respuesta.
 
+### Cómo nombra ISIL sus evaluaciones — medido sobre el ciclo 202620
+
+Medido el 14 de septiembre de 2026 sobre el ciclo **completo**, no sobre una
+muestra de los primeros días. Estas son **todas** las formas distintas que
+aparecen:
+
+| Nombre exacto | `modulename` |
+|---|---|
+| `Vencimiento de Proceso de Aprendizaje 1` … `5` | `assign` |
+| `Se cierra Proceso de Aprendizaje 3` · `6` | `quiz` |
+| `Vencimiento de Evaluación Integral` | `assign` |
+| `RESILIENCIA pendiente`, `AGENTES SOCIALIZADORES pendiente`, … | `forum` |
+
+**El `modulename` no dice qué es una evaluación; el nombre sí.** Es el hallazgo
+que ordena todo lo demás: el **mismo** Proceso de Aprendizaje llega como
+`assign` cuando vence y como `quiz` cuando se cierra. Clasificar por
+`modulename` mezclaría un PA con una tarea cualquiera y con un cuestionario
+cualquiera. Por eso `src/lib/eventKind.ts` prueba el nombre primero y deja el
+`modulename` como respaldo para lo que el nombre no etiqueta: los foros, que
+llegan en mayúsculas con el sufijo ` pendiente` y sin ninguna marca de tipo.
+
+Dos detalles que cambian la aritmética de cualquier recuento:
+
+- **La Evaluación Integral nunca viene numerada, y no todos los cursos la
+  tienen.** Los dos cursos VIR —Desarrollo de Resiliencia y Dirección de
+  Personas— llevan **seis** PA y ninguna EI; los otros nueve, cuatro PA más la
+  EI.
+- **«Vencimiento de» y «Se cierra» son dos hitos del mismo PA**, con dos fechas
+  distintas y dos cosas que hacer. Contar evaluaciones contando PAs distintos
+  escondería una de las dos.
+
+**Sin medir: si estas formas se repiten en otros ciclos.** Las variantes que el
+código tolera de más —la sigla `PA` suelta, el número pegado a ella— **no
+aparecen en 202620** y están marcadas como tolerancia deducida en sus propios
+tests, para que nadie las lea como una medición.
+
+### La forma del nombre de un curso
+
+```
+3672.202620 GESTION DE PROYECTOS (SPR)
+└──┬─┘ └─┬──┘ └───────┬────────┘ └─┬─┘
+ código periodo     nombre      modalidad
+```
+
+**Ni el código ni la modalidad distinguen un curso de otro**: el código tiene la
+misma estructura en los once y la modalidad se repite por bloques —`SPR`, `VIR`,
+`SRM`, `PRE`—. Donde el nombre no quepa entero hay que quitar los dos, y ahí
+está la trampa: **el código lleva un punto**. Una expresión que solo acepte
+dígitos seguidos corta en él y deja `.202620` al frente, que ocupa lo mismo que
+el nombre y no dice nada. `src/lib/course-label.ts` hace ese recorte, con tests.
+
+Los nombres vienen **en mayúsculas y sin tildes**, y no se transforman: pasarlos
+a caja mixta convertiría `POO` en `Poo`, y las tildes que la plataforma no manda
+no se pueden reconstruir.
+
+**Sin verificar: si `course.shortname` sirve como abreviatura.** Viene en la
+respuesta del calendario y el código lo prefiere cuando parece un nombre —al
+menos dos letras seguidas y no más largo que el hueco disponible—, pero no está
+medido qué trae de verdad en esta plataforma.
+
 ---
 
 ## 5. Estructura de un curso
@@ -578,3 +638,10 @@ alcance** para la extensión; queda como script aparte si algún día importa.
   declara; lo comprueba el modo diagnóstico contra la lista de `site_info`)
 - Si el horario está disponible vía API
 - Si WSO2 expone tokens OIDC reutilizables entre plataformas
+- **Si la nomenclatura de las evaluaciones se repite en otros ciclos.** Lo del
+  202620 está medido sobre el ciclo entero (§4), pero un ciclo no dice nada de
+  los siguientes: si en 2027-1 un profesor escribe «Cierre del PA 3», la fase se
+  queda en `null` —que es callar, no fallar— y habría que medirlo otra vez
+- **Qué trae `course.shortname` de verdad.** El código lo usa como abreviatura
+  preferida cuando parece un nombre, y no está comprobado si en esta plataforma
+  es una sigla útil o el código de matrícula otra vez

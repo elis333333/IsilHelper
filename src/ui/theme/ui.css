@@ -185,6 +185,29 @@
 .estado--advertencia { color: var(--color-warning); }
 .estado--info        { color: var(--color-info); }
 
+/* ---------- Barras de desplazamiento ----------
+   Las nativas vienen con el cromo del sistema y se ven pegadas encima del tema
+   oscuro, no dentro de él. Aparecen en el modal y en el panel del calendario
+   cuando el día trae muchos eventos.
+
+   Las dos propiedades **se heredan**, así que declararlas una vez en `:root`
+   alcanza a todo lo que desplaza y evita el peor resultado posible: una barra
+   estilizada y otra nativa en pantallas contiguas.
+
+   `thin`, nunca oculta. Una caja que desplaza sin decirlo esconde contenido, y
+   esconder contenido es justo lo que esta interfaz lleva evitando en todas
+   partes.
+
+   El pulgar va en `--color-disabled` (#737373) por su **valor**, no por su
+   nombre: es el gris que llega a unos 3:1 sobre las superficies oscuras, que
+   es lo que pide un elemento de interfaz. El borde sutil (#4D4D4D) se queda en
+   1,9:1 y no se vería. La pista, transparente: el fondo lo pone el contenedor,
+   que no siempre es el mismo. */
+:root {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-disabled) transparent;
+}
+
 /* ---------- Foco ---------- */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--acento);

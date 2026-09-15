@@ -1,12 +1,17 @@
 import { REPO_URL } from "../../lib/constants";
+import { footerCopy } from "../copy/donacion";
 
 /**
  * Pie de la aplicación: el apoyo económico, el repositorio y la firma.
  *
  * El apoyo se pide **una sola vez y abajo**, que es donde no estorba a lo que
- * el estudiante vino a hacer. Y se dice lo que es: un aporte voluntario a
- * quien mantiene esto, no un pago por usarlo. Sin esa frase, un código de pago
- * en una herramienta gratuita se lee como un peaje.
+ * el estudiante vino a hacer. Y se dice lo que es: un aporte voluntario, no un
+ * pago por usarlo. Sin esa frase, un código de pago en una herramienta gratuita
+ * se lee como un peaje.
+ *
+ * El texto rota entre las variantes de `copy/donacion.ts`, elegida una por
+ * apertura de la pestaña. El enlace al repositorio no rota: no es una petición,
+ * es lo que hace verificable la promesa de que no hay servidor.
  */
 export function Footer() {
   return (
@@ -21,10 +26,9 @@ export function Footer() {
         />
 
         <div>
-          <p className="apoyo__titulo">Si te ahorró la tarde, invítame un café</p>
+          <p className="apoyo__titulo">{footerCopy.titulo}</p>
           <p className="parrafo parrafo--apagado" style={{ marginBottom: "var(--space-3)" }}>
-            Escanea el código con Yape. Es un aporte voluntario a quien mantiene esto, no un
-            pago por usarlo: IsilHelper es gratis y no deja de serlo si no lo haces.
+            {footerCopy.cuerpo}
           </p>
           <p className="parrafo" style={{ marginBottom: 0 }}>
             <a href={REPO_URL} target="_blank" rel="noreferrer">

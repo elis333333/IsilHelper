@@ -11,6 +11,19 @@ export const URL_SCHEME = "isilhelper";
  *  promesa de «no hay servidor»: sin código a la vista, es solo una promesa. */
 export const REPO_URL = "https://github.com/elis333333/IsilHelper";
 
+/**
+ * Primer día del ciclo 202620.
+ *
+ * Marca hasta dónde hacia atrás se piden los eventos del calendario. Se fija
+ * por fecha y no por «hace N días» porque lo que el calendario tiene que poder
+ * enseñar es el ciclo, que es una cosa con principio, y no una ventana móvil
+ * que se va comiendo septiembre según pasan las semanas.
+ *
+ * Va como cadena y no como `Date` a propósito: un `Date` exportado es un objeto
+ * mutable que cualquiera puede adelantar sin querer.
+ */
+export const CYCLE_START_ISO = "2026-09-02";
+
 /** El WAF castiga las ráfagas: 600 ms mínimo entre peticiones. */
 export const PAUSE_MS = 600;
 
